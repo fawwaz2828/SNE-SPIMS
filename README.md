@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SNE-SPIMS — Spring Boot 3
 
 Student Progress & Information Management System for a special-needs school
@@ -79,3 +80,6 @@ implemented in this build.
 ```bash
 mvn test    # JUnit 5 + Mockito (access control + report service)
 ```
+=======
+# SNE-SPIMS
+>>>>>>> d671dfb4807aaaf701b267ac19157bc3768486eb
