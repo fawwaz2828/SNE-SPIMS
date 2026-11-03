@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Calendar</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h3 class="mb-0"><i class="bi bi-calendar3 me-1"></i> Calendar</h3>
+        <div class="d-flex align-items-center gap-3">
+            <div class="small">
+                <span class="badge" style="background:#0dcaf0">Therapy</span>
+                <span class="badge" style="background:#fd7e14">Goal due</span>
+                <span class="badge" style="background:#198754">School</span>
+            </div>
+            <div th:if="${visibleStudents.size() > 1}">
+                <select id="studentFilter" class="form-select form-select-sm"
+                        onchange="location = '?studentId=' + (this.value || '')">
+                    <option value="">All students</option>
+                    <option th:each="s : ${visibleStudents}" th:value="${s.id}" th:text="${s.fullName}"
+                            th:selected="${selectedStudentId != null and selectedStudentId == s.id}">Name</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card"><div class="card-body"><div id="calendar"></div></div></div>
+
+    <!-- Day / event modal -->
+    <div class="modal fade" id="dayModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dayModalTitle">Events</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="dayModalBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="pageScripts">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const STUDENT_ID = /*[[${selectedStudentId}]]*/ null;
+        const EVENTS_URL = /*[[@{/calendar/events}]]*/ '/calendar/events';
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = new bootstrap.Modal(document.getElementById('dayModal'));
+            const titleEl = document.getElementById('dayModalTitle');
+            const bodyEl = document.getElementById('dayModalBody');
+
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                height: 'auto',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+                events: {
+                    url: EVENTS_URL,
+                    extraParams: function () { return STUDENT_ID ? { studentId: STUDENT_ID } : {}; }
+                },
+                eventClick: function (info) {
+                    info.jsEvent.preventDefault();
+                    const e = info.event;
+                    titleEl.textContent = e.title;
+                    bodyEl.innerHTML =
+                        '<p class="mb-1"><strong>When:</strong> ' + e.start.toLocaleString() + '</p>' +
+                        (e.extendedProps.description ? '<p class="mb-0">' + e.extendedProps.description + '</p>' : '');
+                    modal.show();
+                },
+                dateClick: function (info) {
+                    const day = info.dateStr;
+                    const items = calendar.getEvents().filter(ev =>
+                        ev.start && ev.start.toISOString().substring(0, 10) === day);
+                    titleEl.textContent = 'Events on ' + day;
+                    if (!items.length) {
+                        bodyEl.innerHTML = '<p class="text-muted mb-0">No events.</p>';
+                    } else {
+                        bodyEl.innerHTML = '<ul class="list-group list-group-flush">' +
+                            items.map(ev => '<li class="list-group-item">' +
+                                '<span class="badge me-2" style="background:' + ev.backgroundColor + '">' +
+                                (ev.extendedProps.type || '') + '</span>' + ev.title +
+                                (ev.extendedProps.description ? '<div class="small text-muted">' +
+                                    ev.extendedProps.description + '</div>' : '') + '</li>').join('') + '</ul>';
+                    }
+                    modal.show();
+                }
+            });
+            calendar.render();
+        });
+        /*]]>*/
+    </script>
+</th:block>
+</body>
+</html>

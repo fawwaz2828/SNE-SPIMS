@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>IEP Form</title></head>
+<body>
+<div layout:fragment="content">
+
+    <h3 class="mb-3">
+        <i class="bi bi-clipboard2-pulse me-1"></i>
+        <span th:text="${program.id == 0} ? 'New IEP' : 'Edit IEP'">IEP</span>
+        <small class="text-muted" th:text="${student.fullName}">Name</small>
+    </h3>
+
+    <form method="post"
+          th:action="${program.id == 0} ? @{/students/{sid}/iep(sid=${student.id})} : @{/iep/{pid}(pid=${program.id})}"
+          class="row g-3 bg-white p-4 border rounded">
+
+        <div class="col-md-8">
+            <label class="form-label">Title <span class="text-danger">*</span></label>
+            <input name="title" class="form-control" required th:value="${program.title}"/>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Academic year <span class="text-danger">*</span></label>
+            <input name="academicYear" class="form-control" placeholder="2024/2025" required
+                   th:value="${program.academicYear}"/>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Start date <span class="text-danger">*</span></label>
+            <input type="date" name="startDate" class="form-control" required th:value="${program.startDate}"/>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">End date <span class="text-danger">*</span></label>
+            <input type="date" name="endDate" class="form-control" required th:value="${program.endDate}"/>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Present levels of performance</label>
+            <textarea name="presentLevels" class="form-control" rows="3"
+                      placeholder="Baseline: the child's current strengths, needs and skill levels…"
+                      th:text="${program.presentLevels}"></textarea>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Accommodations &amp; modifications</label>
+            <textarea name="accommodations" class="form-control" rows="3"
+                      placeholder="e.g. extra time, visual schedule, assistive technology, seating…"
+                      th:text="${program.accommodations}"></textarea>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == program.status}"></option>
+            </select>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <a th:href="${program.id == 0} ? @{/students/{id}/iep(id=${student.id})} : @{/iep/{id}(id=${program.id})}"
+               class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

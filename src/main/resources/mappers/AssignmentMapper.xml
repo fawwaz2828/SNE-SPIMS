@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AssignmentMapper">
+
+    <!--
+      One result map serves both link kinds. Teacher links alias teacher_id AS
+      user_id and carry is_primary; parent links alias parent_id AS user_id and
+      carry relationship. The user_role literal is selected per query. Columns not
+      present in a given query simply leave their property at its default.
+      is_primary is mapped explicitly (the model property is "primary", not
+      "isPrimary").
+    -->
+    <resultMap id="assignment" type="Assignment">
+        <id column="id" property="id"/>
+        <result column="is_primary" property="primary"/>
+    </resultMap>
+
+    <insert id="assignTeacher" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO teacher_student (teacher_id, student_id, is_primary)
+        VALUES (#{teacherId}, #{studentId}, #{primary})
+    </insert>
+
+    <delete id="removeTeacherLink">
+        DELETE FROM teacher_student WHERE id = #{assignmentId}
+    </delete>
+
+    <select id="studentsForTeacher" resultType="Student">
+        SELECT s.* FROM students s
+        JOIN teacher_student ts ON ts.student_id = s.id
+        WHERE ts.teacher_id = #{teacherId} AND s.active = TRUE
+        ORDER BY s.full_name
+    </select>
+
+    <select id="teacherLinks" resultMap="assignment">
+        SELECT ts.id, ts.teacher_id AS user_id, ts.student_id, ts.is_primary, ts.assigned_at,
+               u.full_name AS user_name, 'TEACHER' AS user_role
+        FROM teacher_student ts
+        JOIN users u ON u.id = ts.teacher_id
+        WHERE ts.student_id = #{studentId}
+        ORDER BY u.full_name
+    </select>
+
+    <select id="isTeacherOfStudent" resultType="long">
+        SELECT COUNT(*) FROM teacher_student WHERE teacher_id = #{teacherId} AND student_id = #{studentId}
+    </select>
+
+    <insert id="assignParent" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO parent_student (parent_id, student_id, relationship)
+        VALUES (#{parentId}, #{studentId}, #{relationship})
+    </insert>
+
+    <delete id="removeParentLink">
+        DELETE FROM parent_student WHERE id = #{assignmentId}
+    </delete>
+
+    <select id="studentsForParent" resultType="Student">
+        SELECT s.* FROM students s
+        JOIN parent_student ps ON ps.student_id = s.id
+        WHERE ps.parent_id = #{parentId} AND s.active = TRUE
+        ORDER BY s.full_name
+    </select>
+
+    <select id="parentLinks" resultMap="assignment">
+        SELECT ps.id, ps.parent_id AS user_id, ps.student_id, ps.relationship, ps.assigned_at,
+               u.full_name AS user_name, 'PARENT' AS user_role
+        FROM parent_student ps
+        JOIN users u ON u.id = ps.parent_id
+        WHERE ps.student_id = #{studentId}
+        ORDER BY u.full_name
+    </select>
+
+    <select id="isParentOfStudent" resultType="long">
+        SELECT COUNT(*) FROM parent_student WHERE parent_id = #{parentId} AND student_id = #{studentId}
+    </select>
+
+    <select id="teacherIdsForStudent" resultType="long">
+        SELECT teacher_id FROM teacher_student WHERE student_id = #{studentId}
+    </select>
+
+</mapper>

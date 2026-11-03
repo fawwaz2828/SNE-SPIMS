@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Report Form</title></head>
+<body>
+<div layout:fragment="content">
+
+    <h3 class="mb-3">
+        <i class="bi bi-journal-text me-1"></i>
+        <span th:text="${report.id == 0} ? 'New Report' : 'Edit Report'">Report</span>
+        <small class="text-muted" th:text="${student.fullName}">Name</small>
+    </h3>
+
+    <form method="post"
+          th:action="${report.id == 0} ? @{/students/{sid}/reports(sid=${student.id})} : @{/reports/{id}(id=${report.id})}"
+          class="bg-white p-4 border rounded">
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <label class="form-label">Date <span class="text-danger">*</span></label>
+                <input type="date" name="reportDate" class="form-control" required th:value="${report.reportDate}"/>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Mood</label>
+                <select name="mood" class="form-select">
+                    <option value="">—</option>
+                    <option th:each="m : ${moods}" th:value="${m}" th:text="${m}"
+                            th:selected="${m == report.mood}"></option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Summary <span class="text-danger">*</span></label>
+                <textarea name="summary" class="form-control" rows="3" required th:text="${report.summary}"></textarea>
+            </div>
+        </div>
+
+        <h6>Rubric</h6>
+        <table class="table align-middle">
+            <thead class="table-light"><tr><th>Criterion</th><th>Rating</th><th>Comment</th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${criteria}">
+                <td style="width:25%">
+                    <input type="hidden" name="criterion" th:value="${c}"/>
+                    <span th:text="${c}">Criterion</span>
+                </td>
+                <td style="width:25%">
+                    <select name="rating" class="form-select form-select-sm">
+                        <option value="">—</option>
+                        <option th:each="r : ${ratings}" th:value="${r}" th:text="${r}"
+                                th:selected="${r == ratingByCriterion.get(c)}"></option>
+                    </select>
+                </td>
+                <td>
+                    <input name="comment" class="form-control form-control-sm"
+                           th:value="${commentByCriterion.get(c)}"/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <button class="btn btn-primary" type="submit">Save draft</button>
+        <a th:href="${report.id == 0} ? @{/students/{id}/reports(id=${student.id})} : @{/reports/{id}(id=${report.id})}"
+           class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>
+</body>
+</html>

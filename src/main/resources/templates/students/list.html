@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title th:text="${currentUser != null and currentUser.parent} ? 'My Children' : 'Students'">Students</title></head>
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0"><i class="bi bi-people-fill me-1"></i>
+            <span th:text="${currentUser != null and currentUser.parent} ? 'My Children' : 'Students'">Students</span></h3>
+        <a th:if="${canManage}" th:href="@{/students/new}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New Student</a>
+    </div>
+
+    <form th:if="${canManage}" method="get" th:action="@{/students}" class="row g-2 mb-3">
+        <div class="col-md-3">
+            <input name="keyword" class="form-control form-control-sm" placeholder="Name or code…"
+                   th:value="${keyword}"/>
+        </div>
+        <div class="col-md-3">
+            <select name="disability" class="form-select form-select-sm">
+                <option value="">All disabilities</option>
+                <option th:each="e : ${disabilityTypes}" th:value="${e.key}" th:text="${e.value}"
+                        th:selected="${e.key == disability}"></option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="support" class="form-select form-select-sm">
+                <option value="">All support</option>
+                <option th:each="s : ${supportLevels}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == support}"></option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input name="classGroup" class="form-control form-control-sm" placeholder="Class"
+                   th:value="${classGroup}"/>
+        </div>
+        <div class="col-md-2"><button class="btn btn-sm btn-outline-primary w-100">Filter</button></div>
+    </form>
+
+    <table class="table table-hover align-middle bg-white">
+        <thead class="table-light">
+        <tr><th>Code</th><th>Name</th><th>Disability</th><th>Support</th><th>Class</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+        <tr th:if="${#lists.isEmpty(students)}">
+            <td colspan="6" class="text-center text-muted py-4">No students found.</td>
+        </tr>
+        <tr th:each="s : ${students}" style="cursor:pointer"
+            th:onclick="|window.location='@{/students/{id}(id=${s.id})}'|">
+            <td th:text="${s.studentCode}">STU001</td>
+            <td th:text="${s.fullName}">Name</td>
+            <td th:text="${disabilityTypes.getOrDefault(s.disabilityType, s.disabilityType)}">Autism</td>
+            <td><span class="badge bg-secondary" th:text="${s.supportLevel}">MODERATE</span></td>
+            <td th:text="${s.classGroup}">Class</td>
+            <td>
+                <span th:if="${s.active}" class="badge bg-success">Active</span>
+                <span th:unless="${s.active}" class="badge bg-secondary">Inactive</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

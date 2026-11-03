@@ -1,0 +1,372 @@
+/* ============================================================================
+   Luna Bridge — Design System
+   Implements DESIGN.md: calm & warm, Lexend, soft-clay accent, oklch palette,
+   icon-rail + floating app-card shell. Restyles Bootstrap so every existing
+   page adopts the system without per-page markup changes.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
+
+/* ---- 1. Tokens ----------------------------------------------------------- */
+:root {
+    /* Neutrals (warm) */
+    --bg:        oklch(0.97  0.009 50);
+    --surface:   oklch(0.998 0.003 60);
+    --ink:       oklch(0.31  0.018 40);
+    --ink-soft:  oklch(0.55  0.018 45);
+    --border:    oklch(0.92  0.012 55);
+
+    /* Primary accent — soft clay red */
+    --red:       oklch(0.59  0.155 28);
+    --red-deep:  oklch(0.5   0.16  28);
+    --red-tint:  oklch(0.955 0.03  32);
+
+    /* Domain colours */
+    --d-academic: oklch(0.6  0.12 250);
+    --d-comm:     oklch(0.58 0.10 165);
+    --d-social:   oklch(0.64 0.12 60);
+    --d-selfcare: oklch(0.58 0.13 300);
+    --d-motor:    oklch(0.6  0.12 200);
+    --c-blue-bg:   oklch(0.95  0.032 250);
+    --c-green-bg:  oklch(0.952 0.038 165);
+    --c-amber-bg:  oklch(0.955 0.045 72);
+    --c-violet-bg: oklch(0.95  0.036 300);
+    --c-cyan-bg:   oklch(0.95  0.034 200);
+
+    /* Shape */
+    --r-app: 30px;
+    --r-card: 20px;
+    --r-ctl: 14px;
+    --r-pill: 999px;
+
+    /* Shadows */
+    --sh-app: 0 40px 80px -40px rgba(90,40,30,.45);
+    --sh-accent: 0 8px 18px -8px var(--red);
+    --sh-card: 0 1px 2px rgba(90,40,30,.06);
+
+    /* Bridge Bootstrap's theme variables onto the clay accent */
+    --bs-primary: var(--red);
+    --bs-primary-rgb: 196, 88, 64;
+    --bs-link-color: var(--red);
+    --bs-link-hover-color: var(--red-deep);
+    --bs-border-color: var(--border);
+    --bs-body-color: var(--ink);
+    --bs-body-bg: var(--surface);
+    --bs-font-sans-serif: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ---- 2. Base & app wash -------------------------------------------------- */
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    font-family: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+    background-color: var(--bg);
+    min-height: 100vh;
+}
+
+h1,h2,h3,h4,h5 { letter-spacing: -0.01em; color: var(--ink); }
+a { color: var(--red); text-decoration: none; }
+a:hover { color: var(--red-deep); }
+
+/* ---- 3. App shell: icon rail + content, capped to one shared width ------- */
+.app-shell {
+    width: 100%;
+    max-width: 1440px;          /* same comfortable content width on every page */
+    margin-inline: auto;        /* centred on wide screens (sides show --bg) */
+    background: var(--surface);
+    display: flex;
+    min-height: 100vh;
+}
+@media (max-width: 720px) {
+    .app-shell { flex-direction: column; }
+}
+
+/* Rail */
+.rail {
+    flex: 0 0 80px;
+    width: 80px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+}
+.rail .rail-logo {
+    width: 46px; height: 46px;
+    display: grid; place-items: center;
+    border-radius: var(--r-ctl);
+    background: var(--red);
+    color: #fff; font-size: 1.4rem;
+    box-shadow: var(--sh-accent);
+    margin-bottom: 14px;
+}
+.rail .rail-logo:hover { color: #fff; }
+/* When the logo box holds a real image, drop the red tile + show it cleanly. */
+.rail-logo.has-img { background: transparent; box-shadow: none; }
+.rail-logo .logo-img { width: 100%; height: 100%; object-fit: contain; }
+.rail-btn {
+    width: 50px; height: 50px;
+    display: grid; place-items: center;
+    border-radius: 15px;
+    color: var(--ink-soft);
+    font-size: 1.3rem;
+    position: relative;
+    transition: background .15s ease, color .15s ease, border-radius .15s ease;
+}
+.rail-btn:hover { background: var(--red-tint); color: var(--red-deep); border-radius: 50%; }
+.rail-btn.active { background: var(--red); color: #fff; border-radius: 50%; }
+.rail-btn .dot {
+    position: absolute; top: 9px; right: 11px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red); border: 2px solid var(--surface);
+}
+.rail-btn.active .dot { background: #fff; border-color: var(--red); }
+.rail-spacer { flex: 1 1 auto; }
+.rail-btn.logout:hover { background: var(--red-tint); color: var(--red-deep); border-radius: 50%; }
+
+@media (max-width: 720px) {
+    .rail {
+        flex-direction: row; width: 100%; height: auto;
+        position: sticky; top: 0; border-right: 0;
+        border-bottom: 1px solid var(--border);
+        gap: 4px; padding: 10px; overflow-x: auto;
+        z-index: 20;
+    }
+    .rail .rail-logo { margin-bottom: 0; }
+    .rail-spacer { flex: 0 0 auto; }
+}
+
+/* Main column */
+.app-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+
+/* Topbar */
+.topbar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+}
+.topbar .search {
+    flex: 1 1 auto; max-width: 440px;
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    padding: 9px 16px;
+    color: var(--ink-soft);
+}
+.topbar .search:focus-within { border-color: var(--red); background: var(--surface); }
+.topbar .search input {
+    border: 0; background: transparent; outline: none;
+    width: 100%; color: var(--ink); font-size: 14px;
+}
+.topbar .greeting { flex: 1 1 auto; font-weight: 600; color: var(--ink-soft); }
+.topbar .topbar-actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.icon-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center;
+    color: var(--ink-soft); background: var(--bg);
+    border: 1px solid var(--border);
+    position: relative; font-size: 1.15rem;
+}
+.icon-btn:hover { color: var(--red-deep); border-color: var(--red); }
+
+@media (max-width: 720px) {
+    .topbar { padding: 14px 16px; flex-wrap: wrap; }
+}
+
+/* Content */
+.content-area { padding: 26px 30px 34px; flex: 1 1 auto; }
+@media (max-width: 720px) { .content-area { padding: 18px 16px 28px; } }
+
+.app-footer {
+    text-align: center; color: var(--ink-soft);
+    font-size: 12.5px; padding: 14px;
+}
+
+/* ---- 4. Typography helpers ---------------------------------------------- */
+.page-title { font-size: 22px; font-weight: 800; margin: 0; }
+.text-muted { color: var(--ink-soft) !important; }
+.small, .small * { font-size: 13px; }
+
+/* ---- 5. Bootstrap component restyle ------------------------------------- */
+
+/* Buttons */
+.btn { border-radius: var(--r-ctl); font-weight: 600; padding: 0.5rem 1rem; }
+.btn-sm { border-radius: 11px; padding: 0.3rem 0.7rem; }
+.btn-primary {
+    --bs-btn-bg: var(--red); --bs-btn-border-color: var(--red);
+    --bs-btn-hover-bg: var(--red-deep); --bs-btn-hover-border-color: var(--red-deep);
+    --bs-btn-active-bg: var(--red-deep); --bs-btn-active-border-color: var(--red-deep);
+    --bs-btn-disabled-bg: var(--red); --bs-btn-disabled-border-color: var(--red);
+    --bs-btn-color: #fff; --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff;
+    box-shadow: var(--sh-accent);
+}
+.btn-outline-primary {
+    --bs-btn-color: var(--red-deep); --bs-btn-border-color: var(--red);
+    --bs-btn-hover-bg: var(--red); --bs-btn-hover-border-color: var(--red);
+    --bs-btn-active-bg: var(--red-deep); --bs-btn-active-border-color: var(--red-deep);
+    --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff;
+}
+.btn-secondary {
+    --bs-btn-bg: var(--bg); --bs-btn-border-color: var(--border);
+    --bs-btn-color: var(--ink);
+    --bs-btn-hover-bg: var(--border); --bs-btn-hover-border-color: var(--border);
+    --bs-btn-hover-color: var(--ink); --bs-btn-active-color: var(--ink);
+    --bs-btn-active-bg: var(--border); --bs-btn-active-border-color: var(--border);
+}
+.btn-dark {
+    --bs-btn-bg: var(--ink); --bs-btn-border-color: var(--ink);
+    --bs-btn-hover-bg: oklch(0.24 0.018 40); --bs-btn-hover-border-color: oklch(0.24 0.018 40);
+}
+.btn-link { color: var(--red); font-weight: 600; }
+
+/* Cards */
+.card {
+    border: 1px solid var(--border);
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-card);
+    background: var(--surface);
+}
+.card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700; color: var(--ink);
+    padding: 16px 18px;
+}
+.card-body { padding: 18px; }
+.card-footer { background: transparent; border-top: 1px solid var(--border); }
+
+/* Tables */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: var(--red-tint);
+    color: var(--ink);
+    border-color: var(--border);
+    vertical-align: middle;
+}
+.table > thead th, .table-light, .table-light th {
+    background: var(--bg) !important;
+    color: var(--ink-soft) !important;
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em;
+    border-color: var(--border) !important;
+}
+.table > :not(caption) > * > * { border-bottom-color: var(--border); padding: 0.7rem 0.75rem; }
+
+/* Forms */
+.form-control, .form-select {
+    border-radius: var(--r-ctl);
+    border-color: var(--border);
+    background-color: var(--bg);
+    color: var(--ink);
+    padding: 0.5rem 0.85rem;
+}
+.form-control-sm, .form-select-sm { border-radius: 11px; }
+.form-control:focus, .form-select:focus {
+    border-color: var(--red);
+    background-color: var(--surface);
+    box-shadow: 0 0 0 0.2rem oklch(0.59 0.155 28 / .15);
+}
+.form-control::placeholder { color: var(--ink-soft); opacity: .8; }
+.form-label { font-weight: 600; font-size: 13.5px; color: var(--ink-soft); margin-bottom: .35rem; }
+.input-group-text { background: var(--bg); border-color: var(--border); color: var(--ink-soft); }
+
+/* Badges — calm, tinted, readable */
+.badge { font-weight: 600; border-radius: var(--r-pill); padding: 0.4em 0.7em; }
+.badge.bg-primary   { background: var(--red-tint) !important;   color: var(--red-deep) !important; }
+.badge.bg-secondary { background: var(--bg) !important;          color: var(--ink-soft) !important; border: 1px solid var(--border); }
+.badge.bg-success   { background: var(--c-green-bg) !important;  color: oklch(0.42 0.1 165) !important; }
+.badge.bg-info      { background: var(--c-blue-bg) !important;   color: oklch(0.45 0.11 250) !important; }
+.badge.bg-warning   { background: var(--c-amber-bg) !important;  color: oklch(0.46 0.11 60)  !important; }
+.badge.bg-danger    { background: var(--red-tint) !important;    color: var(--red-deep) !important; }
+.badge.bg-light     { background: var(--bg) !important;          color: var(--ink-soft) !important; }
+
+/* Alerts */
+.alert { border-radius: var(--r-card); border: 1px solid var(--border); }
+.alert-success { background: var(--c-green-bg); color: oklch(0.4 0.1 165); border-color: oklch(0.85 0.06 165); }
+.alert-danger  { background: var(--red-tint);   color: var(--red-deep);    border-color: oklch(0.88 0.06 30); }
+.alert-warning { background: var(--c-amber-bg);  color: oklch(0.44 0.11 60); border-color: oklch(0.86 0.08 72); }
+.alert-info    { background: var(--c-blue-bg);   color: oklch(0.44 0.11 250); border-color: oklch(0.86 0.06 250); }
+.alert-link { color: inherit; font-weight: 700; }
+
+/* List groups */
+.list-group-item {
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    padding: 0.8rem 1rem;
+}
+.list-group-item-action:hover { background: var(--red-tint); }
+
+/* Dropdowns */
+/* Bootstrap has no real .dropdown-toggle-no-caret class — suppress the caret here. */
+.dropdown-toggle-no-caret::after { display: none !important; }
+.dropdown-menu {
+    border-radius: var(--r-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--sh-app);
+    padding: 6px;
+}
+.dropdown-item { border-radius: 10px; padding: 0.5rem 0.7rem; color: var(--ink); }
+.dropdown-item:hover, .dropdown-item:focus { background: var(--red-tint); color: var(--red-deep); }
+.dropdown-divider { border-color: var(--border); }
+
+/* Modals */
+.modal-content { border-radius: var(--r-card); border: 1px solid var(--border); box-shadow: var(--sh-app); }
+.modal-header, .modal-footer { border-color: var(--border); }
+
+/* Nav pills / tabs */
+.nav-pills .nav-link.active { background: var(--red); }
+.nav-pills .nav-link { color: var(--ink-soft); border-radius: var(--r-ctl); }
+.nav-tabs { border-color: var(--border); }
+.nav-tabs .nav-link.active { color: var(--red-deep); border-color: var(--border) var(--border) var(--surface); }
+.nav-tabs .nav-link { color: var(--ink-soft); }
+
+/* Pagination */
+.page-link { color: var(--red-deep); border-color: var(--border); }
+.page-item.active .page-link { background: var(--red); border-color: var(--red); }
+
+/* Progress bars (always paired with a % per DESIGN.md accessibility note) */
+.progress { background: var(--bg); border-radius: var(--r-pill); height: 0.7rem; }
+.progress-bar { background: var(--red); }
+
+/* ---- 6. Colour utilities (bridge BS contextual classes to the palette) -- */
+.bg-primary  { background-color: var(--red) !important; }
+.text-primary { color: var(--red-deep) !important; }
+.bg-white { background-color: var(--surface) !important; }
+.bg-light { background-color: var(--bg) !important; }
+.border-primary { border-color: var(--red) !important; }
+.text-success { color: oklch(0.5 0.12 165) !important; }
+.text-danger  { color: var(--red-deep) !important; }
+.text-info    { color: oklch(0.5 0.11 250) !important; }
+.text-warning { color: oklch(0.5 0.12 60) !important; }
+.border-start.border-success { border-color: oklch(0.7 0.1 165) !important; }
+
+/* Domain accents (for progress cards etc.) */
+.domain-academic { --domain: var(--d-academic); --domain-bg: var(--c-blue-bg); }
+.domain-comm     { --domain: var(--d-comm);     --domain-bg: var(--c-green-bg); }
+.domain-social   { --domain: var(--d-social);   --domain-bg: var(--c-amber-bg); }
+.domain-selfcare { --domain: var(--d-selfcare); --domain-bg: var(--c-violet-bg); }
+.domain-motor    { --domain: var(--d-motor);    --domain-bg: var(--c-cyan-bg); }
+
+/* Dashboard parent tiles (kept from previous template, restyled) */
+.tile {
+    border-radius: var(--r-card);
+    transition: transform .12s ease, box-shadow .12s ease;
+    background: var(--surface);
+}
+.tile:hover { transform: translateY(-3px); box-shadow: 0 .6rem 1.4rem rgba(90,40,30,.12) !important; }
+.tile-icon { font-size: 2.2rem; display: block; margin-bottom: .4rem; color: var(--red); }
+.tile-label { font-weight: 700; color: var(--ink); }
+
+.chart-box { position: relative; height: 320px; }
+.stat-card .display-6, .stat-card .display-5 { font-weight: 800; color: var(--ink); }

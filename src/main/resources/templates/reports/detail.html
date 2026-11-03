@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Report</title></head>
+<body>
+<div layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/students}" th:text="${currentUser != null and currentUser.parent} ? 'My Children' : 'Students'">Students</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/students/{id}(id=${report.studentId})}"
+                                           th:text="${report.studentName}">Name</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/students/{id}/reports(id=${report.studentId})}">Reports</a></li>
+            <li class="breadcrumb-item active" th:text="${report.reportDate}">date</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-3">
+        <div class="card-body d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+                <h4 class="mb-1">Report — <span th:text="${report.reportDate}">date</span></h4>
+                <p class="text-muted mb-0">
+                    Mood: <strong th:text="${report.mood}">-</strong> ·
+                    <span th:if="${report.published}" class="badge bg-success">Published</span>
+                    <span th:unless="${report.published}" class="badge bg-warning text-dark">Draft</span>
+                </p>
+            </div>
+            <div th:if="${canEdit}" class="text-end">
+                <a th:unless="${report.published}" th:href="@{/reports/{id}/edit(id=${report.id})}"
+                   class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Edit</a>
+                <form th:unless="${report.published}" method="post" th:action="@{/reports/{id}/publish(id=${report.id})}"
+                      class="d-inline">
+                    <button class="btn btn-sm btn-success"><i class="bi bi-send"></i> Publish</button></form>
+                <form th:if="${report.published}" method="post" th:action="@{/reports/{id}/unpublish(id=${report.id})}"
+                      class="d-inline">
+                    <button class="btn btn-sm btn-outline-warning"><i class="bi bi-arrow-counterclockwise"></i> Unpublish</button></form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3"><div class="card-body">
+        <h6>Summary</h6>
+        <p class="mb-0" style="white-space:pre-wrap" th:text="${report.summary}">summary</p>
+    </div></div>
+
+    <!-- Acknowledgement (D22 / process 4.5) -->
+    <div th:if="${report.published}" class="mb-3">
+        <!-- Parent: acknowledge button or confirmation -->
+        <div th:if="${currentUser.parent}">
+            <div th:if="${report.acknowledged}" class="alert alert-success mb-0">
+                <i class="bi bi-check2-circle me-1"></i>
+                You acknowledged this report on
+                <span th:text="${#temporals.format(report.acknowledgedAt, 'dd MMM yyyy HH:mm')}">when</span>.
+            </div>
+            <form th:unless="${report.acknowledged}" method="post"
+                  th:action="@{/reports/{id}/acknowledge(id=${report.id})}">
+                <button class="btn btn-success"><i class="bi bi-check2-circle me-1"></i> Acknowledge report</button>
+                <span class="text-muted small ms-2">Confirm you have read this report.</span>
+            </form>
+        </div>
+        <!-- Staff: see acknowledgement status -->
+        <div th:if="${canEdit}">
+            <span th:if="${report.acknowledged}" class="badge bg-success">
+                <i class="bi bi-check2-circle me-1"></i>Acknowledged by parent
+                (<span th:text="${#temporals.format(report.acknowledgedAt, 'dd MMM yyyy HH:mm')}">when</span>)</span>
+            <span th:unless="${report.acknowledged}" class="badge bg-secondary">Not yet acknowledged by parent</span>
+        </div>
+    </div>
+
+    <table class="table bg-white">
+        <thead class="table-light"><tr><th>Criterion</th><th>Rating</th><th>Comment</th></tr></thead>
+        <tbody>
+        <tr th:if="${#lists.isEmpty(report.rubrics)}"><td colspan="3" class="text-muted text-center">No rubric scores.</td></tr>
+        <tr th:each="rb : ${report.rubrics}">
+            <td th:text="${rb.criterion}">criterion</td>
+            <td><span class="badge bg-info text-dark" th:text="${rb.rating}">rating</span></td>
+            <td th:text="${rb.comment}">comment</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

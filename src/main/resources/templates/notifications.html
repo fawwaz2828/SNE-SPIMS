@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Notifications</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0"><i class="bi bi-bell me-1"></i> Notifications
+            <span class="badge bg-danger" th:if="${unread > 0}" th:text="${unread}">0</span>
+        </h3>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-secondary"
+               th:href="@{/notifications(archived=${!showArchived})}"
+               th:text="${showArchived} ? 'Hide archived' : 'Show archived'">Show archived</a>
+            <form th:action="@{/notifications/read-all}" method="post">
+                <button class="btn btn-sm btn-primary" type="submit">Mark all read</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr><th></th><th>Notification</th><th>When</th><th class="text-end">Actions</th></tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(notifications)}">
+                    <td colspan="4" class="text-center text-muted py-4">No notifications.</td>
+                </tr>
+                <tr th:each="n : ${notifications}" th:classappend="${n.read} ? '' : 'table-warning'">
+                    <td class="text-center">
+                        <i class="bi" th:classappend="${
+                            n.type == 'DAILY_REPORT'    ? 'bi-journal-text text-primary' :
+                            n.type == 'INCIDENT'        ? 'bi-exclamation-triangle text-danger' :
+                            n.type == 'THERAPY_REMINDER'? 'bi-calendar-event text-info' :
+                            n.type == 'MESSAGE'         ? 'bi-chat-dots text-success' : 'bi-info-circle'}"></i>
+                    </td>
+                    <td>
+                        <a th:if="${n.link}" th:href="@{${n.link}}" class="fw-semibold text-decoration-none"
+                           th:text="${n.title}">Title</a>
+                        <span th:unless="${n.link}" class="fw-semibold" th:text="${n.title}">Title</span>
+                        <div class="small text-muted" th:text="${n.message}">Message</div>
+                    </td>
+                    <td class="small text-muted"
+                        th:text="${#temporals.format(n.createdAt, 'dd MMM, HH:mm')}">date</td>
+                    <td class="text-end">
+                        <form th:if="${!n.read}" th:action="@{|/notifications/${n.id}/read|}" method="post"
+                              class="d-inline">
+                            <button class="btn btn-sm btn-outline-primary" title="Mark read">
+                                <i class="bi bi-check2"></i>
+                            </button>
+                        </form>
+                        <form th:if="${!n.archived}" th:action="@{|/notifications/${n.id}/archive|}" method="post"
+                              class="d-inline">
+                            <button class="btn btn-sm btn-outline-secondary" title="Archive">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

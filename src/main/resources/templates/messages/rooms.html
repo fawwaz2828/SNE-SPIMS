@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Messages</title>
+    <th:block layout:fragment="pageStyles">
+    <style>
+        .mc .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+        .mc .head h2 { font-size:22px; font-weight:800; margin:0; }
+        .mc .rooms { border:1px solid var(--border); border-radius:18px; background:var(--surface); overflow:hidden; }
+        .mc .room { display:flex; gap:14px; align-items:center; padding:14px 16px; text-decoration:none; color:inherit; }
+        .mc .room + .room { border-top:1px solid var(--border); }
+        .mc .room:hover { background:var(--bg); }
+        .mc .avatar { width:46px; height:46px; border-radius:50%; flex:none; display:grid; place-items:center;
+            font-weight:800; font-size:15px; color:var(--red-deep); background:var(--red-tint); }
+        .mc .room .mid { flex:1 1 auto; min-width:0; }
+        .mc .room .top { display:flex; align-items:center; gap:8px; }
+        .mc .room .name { font-weight:700; font-size:15px; }
+        .mc .role { font-size:10.5px; font-weight:700; letter-spacing:.04em; color:var(--ink-soft);
+            border:1px solid var(--border); border-radius:999px; padding:1px 7px; }
+        .mc .room .student { font-size:12px; color:var(--ink-soft); }
+        .mc .room .snippet { font-size:13.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+        .mc .room .meta { text-align:right; flex:none; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+        .mc .room .time { font-size:11.5px; color:var(--ink-soft); }
+        .mc .badge-unread { background:var(--red); color:#fff; border-radius:999px; min-width:20px; height:20px;
+            padding:0 6px; font-size:12px; font-weight:800; display:grid; place-items:center; }
+        .mc .empty { text-align:center; color:var(--ink-soft); padding:48px 16px; }
+    </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+  <div class="mc">
+    <div class="head">
+        <h2><i class="bi bi-chat-dots me-1"></i> Messages</h2>
+        <a th:href="@{/messages/compose}" class="btn btn-primary btn-sm">
+            <i class="bi bi-pencil-square me-1"></i> New chat</a>
+    </div>
+
+    <div class="rooms" th:if="${!#lists.isEmpty(conversations)}">
+        <a th:each="c : ${conversations}" class="room"
+           th:href="${c.studentId != null} ? @{'/messages/with/' + ${c.otherId}(studentId=${c.studentId})} : @{'/messages/with/' + ${c.otherId}}">
+            <span class="avatar" th:text="${#strings.substring(c.otherName,0,1)}">A</span>
+            <div class="mid">
+                <div class="top">
+                    <span class="name" th:text="${c.otherName}">Name</span>
+                    <span class="role" th:text="${c.otherRole}">ROLE</span>
+                    <span class="student" th:if="${c.studentName}" th:text="'· ' + ${c.studentName}">· Student</span>
+                </div>
+                <div class="snippet" th:if="${c.lastBody != null}">
+                    <span th:if="${c.lastSenderId == me}" class="text-muted">You: </span>
+                    <span th:text="${c.lastBody}">last message…</span>
+                </div>
+                <div class="snippet" th:unless="${c.lastBody != null}" style="font-style:italic;">
+                    No messages yet — start the chat
+                </div>
+            </div>
+            <div class="meta">
+                <span class="time" th:if="${c.lastAt != null}" th:text="${#temporals.format(c.lastAt, 'dd MMM HH:mm')}">12 Jun 09:00</span>
+                <span class="badge-unread" th:if="${c.unread > 0}" th:text="${c.unread}">2</span>
+            </div>
+        </a>
+    </div>
+
+    <div class="empty" th:if="${#lists.isEmpty(conversations)}">
+        <i class="bi bi-chat-square-text" style="font-size:32px;"></i>
+        <p class="mt-2 mb-0">No conversations yet.</p>
+        <a th:href="@{/messages/compose}" class="btn btn-primary btn-sm mt-3">Start a new chat</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

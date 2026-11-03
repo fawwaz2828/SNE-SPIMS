@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Announcement Form</title></head>
+<body>
+<div layout:fragment="content">
+
+    <h3 class="mb-3"><i class="bi bi-megaphone me-1"></i>
+        <span th:text="${announcement.id == 0} ? 'New Announcement' : 'Edit Announcement'">Announcement</span></h3>
+
+    <form method="post" th:action="@{/announcements}" class="row g-3 bg-white p-4 border rounded">
+        <input type="hidden" name="id" th:value="${announcement.id}"/>
+
+        <div class="col-md-8">
+            <label class="form-label">Title <span class="text-danger">*</span></label>
+            <input name="title" class="form-control" required th:value="${announcement.title}"/>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Audience <span class="text-danger">*</span></label>
+            <select name="targetRole" class="form-select" required>
+                <option th:each="t : ${targets}" th:value="${t}" th:text="${t}"
+                        th:selected="${t == announcement.targetRole}"></option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Body <span class="text-danger">*</span></label>
+            <textarea name="body" class="form-control" rows="5" required th:text="${announcement.body}"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Publish at</label>
+            <input type="datetime-local" name="publishAt" class="form-control"
+                   th:value="${announcement.publishAt != null} ? ${#temporals.format(announcement.publishAt, 'yyyy-MM-dd''T''HH:mm')} : ''"/>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Expires at</label>
+            <input type="datetime-local" name="expiresAt" class="form-control"
+                   th:value="${announcement.expiresAt != null} ? ${#temporals.format(announcement.expiresAt, 'yyyy-MM-dd''T''HH:mm')} : ''"/>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <a th:href="@{/announcements}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

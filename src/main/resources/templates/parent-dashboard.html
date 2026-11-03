@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Dashboard</title>
+    <th:block layout:fragment="pageStyles">
+    <style>
+        /* Parent dashboard content. Everything is scoped under .pd so the page's
+           generic class names (.row/.col/.nav/.name…) never collide with the
+           Bootstrap styles loaded by the shared layout. The rail + topbar
+           (logo, logout, notifications, profile) come from layout/main.html, so
+           they are identical to every other page. */
+        /* Both columns share the page's single scroll (no sticky), consistent with
+           the admin/teacher dashboard — left and right move together. */
+        .pd .content { display: grid; grid-template-columns: 1fr 364px; gap: 24px; align-items: start; }
+        @media (max-width: 820px) {
+            .pd .content { grid-template-columns: 1fr; }
+        }
+        .pd .col { display: flex; flex-direction: column; gap: 24px; }
+
+        .pd h2.hero-h { font-size: 26px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.2; margin: 0; }
+        .pd h3.sec { font-size: 18px; font-weight: 800; margin: 0; }
+        .pd .muted { color: var(--ink-soft); }
+        .pd .link { color: var(--red); font-weight: 600; font-size: 13.5px; }
+
+        /* Child switcher */
+        .pd .child-switch { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .pd .child-switch .chip { display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 999px;
+            border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+            font-weight: 600; font-size: 13.5px; text-decoration: none; transition: background .15s, color .15s; }
+        .pd .child-switch .chip:hover { background: var(--red-tint); }
+        .pd .child-switch .chip.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+        /* Quick-access record cards */
+        .pd .qlinks { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+        .pd .qcard { display: flex; flex-direction: column; align-items: center; gap: 10px;
+            padding: 18px 12px; border-radius: 16px; text-align: center;
+            background: var(--surface); border: 1px solid var(--border); text-decoration: none;
+            color: var(--ink); font-weight: 700; transition: transform .12s, box-shadow .12s; }
+        .pd .qcard:hover { transform: translateY(-2px); box-shadow: 0 8px 18px -10px rgba(90,40,30,.35); }
+        .pd .qico { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+            font-size: 1.3rem; flex: none; }
+        .pd .qlabel { font-size: 13.5px; line-height: 1.25; }
+
+        /* Hero */
+        .pd .hero { position: relative; overflow: hidden; border-radius: 20px; padding: 30px;
+            background: linear-gradient(120deg, oklch(0.94 0.045 28), oklch(0.95 0.03 350)); }
+        .pd .hero p { color: var(--red-deep); font-size: 15px; margin: 12px 0 20px; max-width: 60%; line-height: 1.5; }
+        .pd .btn-dark { display: inline-flex; align-items: center; gap: 8px; background: var(--ink); color: #fff;
+            border: 0; border-radius: 14px; padding: 13px 20px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; }
+        .pd .btn-dark:hover { opacity: .92; color: #fff; }
+        .pd .hero-char { position: absolute; right: 28px; bottom: 0; height: 110px; width: auto;
+            object-fit: contain; pointer-events: none; }
+        @media (max-width: 620px) { .pd .hero-char { display: none; } }
+
+        /* Progress cards */
+        .pd .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        @media (max-width: 760px) { .pd .grid4 { grid-template-columns: repeat(2, 1fr); } }
+        .pd .pcard { border-radius: 18px; padding: 18px; }
+        .pd .pchip { width: 38px; height: 38px; border-radius: 11px; background: var(--surface);
+            display: grid; place-items: center; font-size: 1.1rem; margin-bottom: 26px; }
+        .pd .pcard .name { font-weight: 700; font-size: 15.5px; }
+        .pd .pcard .row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); font-weight: 600; margin-top: 10px; }
+        .pd .bar { height: 7px; border-radius: 999px; background: oklch(1 0 0 / .55); margin-top: 7px; overflow: hidden; }
+        .pd .bar > span { display: block; height: 100%; border-radius: 999px; }
+
+        /* Side: calendar */
+        .pd .panel { border: 1px solid var(--border); border-radius: 20px; padding: 18px; background: var(--surface); }
+        .pd .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .pd .cal-head .nav { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border);
+            display: grid; place-items: center; color: var(--ink-soft); }
+        .pd .cal-head .title { font-weight: 700; }
+        .pd .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .pd .week .d { position: relative; padding: 8px 0 12px; border-radius: 12px; border: 1px solid transparent;
+            background: transparent; font-family: inherit; cursor: pointer; transition: background .12s, border-color .12s; }
+        .pd .week .d:hover { background: var(--red-tint); }
+        .pd .week .d .dn { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+        .pd .week .d .nu { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--ink); }
+        .pd .week .d.today { background: var(--red); }
+        .pd .week .d.today .dn { color: oklch(1 0 0 / .85); }
+        .pd .week .d.today .nu { color: #fff; }
+        .pd .week .d.sel { border-color: var(--red); }
+        .pd .week .d .dot { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%);
+            width: 5px; height: 5px; border-radius: 999px; background: var(--red); }
+        .pd .week .d.today .dot { background: #fff; }
+        /* Activities for the selected day */
+        .pd .day-acts { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+        .pd .day-acts .acts-date { font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
+        .pd .act { display: flex; align-items: center; gap: 9px; padding: 7px 0; font-size: 13px; }
+        .pd .act + .act { border-top: 1px solid var(--border); }
+        .pd .act .act-dot { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+        .pd .act .act-time { font-weight: 700; color: var(--ink); min-width: 52px; }
+        .pd .act .act-title { color: var(--ink-soft); }
+        .pd .day-acts .none { color: var(--ink-soft); font-size: 13px; font-style: italic; }
+
+        /* Side: sessions */
+        .pd .scard { border: 1px solid var(--border); border-radius: 18px; padding: 16px; background: var(--surface); }
+        .pd .tags { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+        .pd .tag-pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--c-green-bg); color: var(--d-comm); }
+        .pd .scard .st { font-weight: 700; font-size: 15.5px; }
+        .pd .scard .sd { color: var(--ink-soft); font-size: 13.5px; line-height: 1.45; margin: 6px 0 12px; }
+        .pd .smeta { display: flex; gap: 16px; color: var(--ink-soft); font-size: 13px; font-weight: 600; }
+        .pd .sfoot { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+        .pd .mini-av { width: 34px; height: 34px; border-radius: 999px; background: var(--d-comm); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+        .pd .btn-dark.sm { padding: 10px 16px; font-size: 13.5px; border-radius: 12px; }
+        .pd .empty { color: var(--ink-soft); font-size: 14px; padding: 8px 2px; }
+    </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+  <div class="pd">
+
+    <!-- No child linked yet -->
+    <div th:if="${child == null}" class="content" style="grid-template-columns:1fr;">
+        <div class="panel"><h3 class="sec">Welcome</h3>
+            <p class="muted" style="margin-top:8px;">No child is linked to your account yet.
+                Please contact the school administrator.</p></div>
+    </div>
+
+    <!-- Child switcher (only when the parent has more than one child) -->
+    <div th:if="${child != null and children != null and children.size() > 1}" class="child-switch">
+        <span class="muted">Viewing:</span>
+        <a th:each="c : ${children}" th:href="@{/dashboard(studentId=${c.id})}"
+           class="chip" th:classappend="${c.id == selectedChildId} ? ' active' : ''"
+           th:text="${c.fullName}">Child name</a>
+    </div>
+
+    <div th:if="${child != null}" class="content">
+
+        <!-- ===== Main column ===== -->
+        <div class="col">
+
+            <!-- Hero -->
+            <section class="hero">
+                <h2 class="hero-h" th:if="${latestReport != null}">
+                    <span th:text="${childFirstName}">Maya</span>'s <span th:text="${monthName}">June</span>
+                    progress report is ready to view.</h2>
+                <h2 class="hero-h" th:if="${latestReport == null}">
+                    Welcome back — here is <span th:text="${childFirstName}">Maya</span>'s overview.</h2>
+                <p>See this month's progress, notes from staff and what's coming next.</p>
+                <a th:if="${latestReport != null}" class="btn-dark"
+                   th:href="@{/reports/{id}(id=${latestReport.id})}">View report <i class="bi bi-arrow-right"></i></a>
+                <a th:if="${latestReport == null}" class="btn-dark"
+                   th:href="@{/students/{id}(id=${child.id})}">Open profile <i class="bi bi-arrow-right"></i></a>
+                <a class="link" style="display:inline-block;margin-left:14px;"
+                   th:href="@{/students/{id}/reports(id=${child.id})}">All reports</a>
+                <img class="hero-char" th:src="@{/images/character.png}" alt=""/>
+            </section>
+
+            <!-- Progress by area (dynamic: only domains with goals) -->
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                    <h3 class="sec">Progress by area</h3>
+                    <a class="link" th:href="@{/students/{id}/iep(id=${child.id})}">View all</a>
+                </div>
+                <div th:if="${#lists.isEmpty(domainCards)}" class="empty">No active IEP goals yet.</div>
+                <div class="grid4" th:unless="${#lists.isEmpty(domainCards)}">
+                    <div th:each="c : ${domainCards}" class="pcard" th:style="'background:' + ${c.bg} + ';'">
+                        <div class="pchip" th:style="'color:' + ${c.color} + ';'"><i class="bi" th:classappend="${c.icon}"></i></div>
+                        <div class="name" th:text="${c.label}">Domain</div>
+                        <div class="row"><span>Progress</span><span th:text="${c.pct} + '%'">60%</span></div>
+                        <div class="bar"><span th:style="'width:' + ${c.pct} + '%;background:' + ${c.color} + ';'"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick access to this child's records -->
+            <div>
+                <h3 class="sec" style="margin-bottom:14px;">Explore <span th:text="${childFirstName}">Maya</span>'s records</h3>
+                <div class="qlinks">
+                    <a class="qcard" th:href="@{/students/{id}/iep(id=${child.id})}">
+                        <span class="qico" style="color:var(--d-academic);background:var(--c-blue-bg);"><i class="bi bi-clipboard2-pulse"></i></span>
+                        <span class="qlabel">IEP Program</span>
+                    </a>
+                    <a class="qcard" th:href="@{/students/{id}/reports(id=${child.id})}">
+                        <span class="qico" style="color:var(--d-comm);background:var(--c-green-bg);"><i class="bi bi-journal-text"></i></span>
+                        <span class="qlabel">Daily Reports</span>
+                    </a>
+                    <a class="qcard" th:href="@{/students/{id}/therapy(id=${child.id})}">
+                        <span class="qico" style="color:var(--d-motor);background:var(--c-cyan-bg);"><i class="bi bi-activity"></i></span>
+                        <span class="qlabel">Therapy</span>
+                    </a>
+                    <a class="qcard" th:href="@{/incidents(studentId=${child.id})}">
+                        <span class="qico" style="color:var(--d-social);background:var(--c-amber-bg);"><i class="bi bi-exclamation-triangle"></i></span>
+                        <span class="qlabel">Behavior Incidents</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Side column ===== -->
+        <div class="col">
+            <!-- Calendar: this week's activities (click a day to see what's on) -->
+            <div class="panel">
+                <div class="cal-head">
+                    <span class="title" th:text="${monthYear}">June 2026</span>
+                    <a class="link" th:href="@{/calendar}">Full calendar <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="week" id="weekStrip">
+                    <button type="button" class="d" th:each="d,it : ${weekDays}"
+                            th:classappend="${d.today} ? 'today' : ''"
+                            th:attr="data-day=${it.index}, data-has=${!#lists.isEmpty(d.activities)}">
+                        <div class="dn" th:text="${d.name}">Mon</div>
+                        <div class="nu" th:text="${d.num}">8</div>
+                        <span class="dot" th:if="${!#lists.isEmpty(d.activities)}"></span>
+                    </button>
+                </div>
+
+                <!-- One hidden panel per day; JS shows the selected one (today by default). -->
+                <div class="day-acts">
+                    <div class="acts-for" th:each="d,it : ${weekDays}"
+                         th:attr="data-day=${it.index}" th:classappend="${d.today} ? '' : 'd-none'">
+                        <div class="acts-date" th:text="${d.full}">Monday, 8 Jun</div>
+                        <div th:if="${#lists.isEmpty(d.activities)}" class="none">No activities scheduled.</div>
+                        <div th:each="a : ${d.activities}" class="act">
+                            <span class="act-dot" th:style="'background:' + ${a.color} + ';'"></span>
+                            <span class="act-time" th:text="${a.time}">09:00</span>
+                            <span class="act-title" th:text="${a.title}">Speech therapy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Announcements -->
+            <div class="panel">
+                <h3 class="sec" style="margin-bottom:14px;"><i class="bi bi-megaphone me-1"></i> Announcements</h3>
+                <div th:if="${#lists.isEmpty(announcements)}" class="empty">No announcements right now.</div>
+                <div th:each="a,it : ${announcements}"
+                     th:style="${!it.last} ? 'padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);'">
+                    <div style="font-weight:700;font-size:14.5px;" th:text="${a.title}">Title</div>
+                    <div class="muted" style="font-size:13.5px;line-height:1.45;margin-top:4px;" th:text="${a.body}">Body</div>
+                </div>
+            </div>
+
+            <!-- Upcoming sessions -->
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                    <h3 class="sec">Upcoming sessions</h3>
+                    <a class="link" th:href="@{/calendar}">See calendar</a>
+                </div>
+                <div class="col" style="gap:16px;">
+                    <div th:if="${#lists.isEmpty(sessions)}" class="empty">No upcoming sessions scheduled.</div>
+                    <div class="scard" th:each="s : ${sessions}">
+                        <div class="tags"><span class="tag-pill" th:text="${s.tag}">Speech</span></div>
+                        <div class="st" th:text="${s.title}">Speech Therapy with Ms. Lee</div>
+                        <div class="sd" th:text="${s.desc}">Description</div>
+                        <div class="smeta">
+                            <span><i class="bi bi-clock me-1"></i> <span th:text="${s.when}">Thu · 10:00</span></span>
+                            <span th:if="${s.duration != ''}"><i class="bi bi-calendar3 me-1"></i> <span th:text="${s.duration}">45 min</span></span>
+                        </div>
+                        <div class="sfoot">
+                            <div class="mini-av" th:text="${s.initials}">JL</div>
+                            <a class="btn-dark sm" th:href="@{/students/{id}/therapy(id=${child.id})}">View details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  </div>
+</div>
+
+<th:block layout:fragment="pageScripts">
+    <script>
+        (function () {
+            const strip = document.getElementById('weekStrip');
+            if (!strip) return;
+            const days = strip.querySelectorAll('.d');
+            const panels = document.querySelectorAll('.day-acts .acts-for');
+            days.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const day = btn.getAttribute('data-day');
+                    days.forEach(function (b) { b.classList.remove('sel'); });
+                    btn.classList.add('sel');
+                    panels.forEach(function (p) {
+                        p.classList.toggle('d-none', p.getAttribute('data-day') !== day);
+                    });
+                });
+            });
+        })();
+    </script>
+</th:block>
+</body>
+</html>

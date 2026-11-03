@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: luna-bridge
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m
+
+# Application-specific settings
+app:
+  school-name: "Luna Bridge"
+
+logging:
+  level:
+    com.school: INFO

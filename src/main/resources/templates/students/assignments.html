@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Assignments</title></head>
+<body>
+<div layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/students}" th:text="${currentUser != null and currentUser.parent} ? 'My Children' : 'Students'">Students</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/students/{id}(id=${student.id})}" th:text="${student.fullName}">Name</a></li>
+            <li class="breadcrumb-item active">Assignments</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Teachers -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-easel me-1"></i> Assigned Teachers</div>
+                <ul class="list-group list-group-flush">
+                    <li th:if="${#lists.isEmpty(teacherLinks)}" class="list-group-item text-muted">None yet.</li>
+                    <li th:each="t : ${teacherLinks}"
+                        class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <span th:text="${t.userName}">Teacher</span>
+                            <span th:if="${t.primary}" class="badge bg-primary ms-1">Primary</span>
+                        </span>
+                        <form method="post"
+                              th:action="@{/students/{sid}/assignments/teacher/{aid}/remove(sid=${student.id},aid=${t.id})}">
+                            <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove?')">
+                                <i class="bi bi-x-lg"></i></button>
+                        </form>
+                    </li>
+                </ul>
+                <div class="card-body">
+                    <form method="post" th:action="@{/students/{sid}/assignments/teacher(sid=${student.id})}"
+                          class="row g-2">
+                        <div class="col-7">
+                            <select name="teacherId" class="form-select form-select-sm" required>
+                                <option value="">Select teacher…</option>
+                                <option th:each="u : ${teachers}" th:value="${u.id}" th:text="${u.fullName}"></option>
+                            </select>
+                        </div>
+                        <div class="col-3 d-flex align-items-center">
+                            <div class="form-check"><input type="checkbox" name="primary" value="true"
+                                                            class="form-check-input" id="prim"/>
+                                <label class="form-check-label small" for="prim">Primary</label></div>
+                        </div>
+                        <div class="col-2"><button class="btn btn-sm btn-primary w-100">Add</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parents -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-people me-1"></i> Linked Parents/Guardians</div>
+                <ul class="list-group list-group-flush">
+                    <li th:if="${#lists.isEmpty(parentLinks)}" class="list-group-item text-muted">None yet.</li>
+                    <li th:each="p : ${parentLinks}"
+                        class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><span th:text="${p.userName}">Parent</span>
+                            <span class="badge bg-secondary ms-1" th:text="${p.relationship}">FATHER</span></span>
+                        <form method="post"
+                              th:action="@{/students/{sid}/assignments/parent/{aid}/remove(sid=${student.id},aid=${p.id})}">
+                            <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove?')">
+                                <i class="bi bi-x-lg"></i></button>
+                        </form>
+                    </li>
+                </ul>
+                <div class="card-body">
+                    <form method="post" th:action="@{/students/{sid}/assignments/parent(sid=${student.id})}"
+                          class="row g-2">
+                        <div class="col-6">
+                            <select name="parentId" class="form-select form-select-sm" required>
+                                <option value="">Select parent…</option>
+                                <option th:each="u : ${parents}" th:value="${u.id}" th:text="${u.fullName}"></option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <select name="relationship" class="form-select form-select-sm" required>
+                                <option th:each="r : ${relationships}" th:value="${r}" th:text="${r}"></option>
+                            </select>
+                        </div>
+                        <div class="col-2"><button class="btn btn-sm btn-primary w-100">Add</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

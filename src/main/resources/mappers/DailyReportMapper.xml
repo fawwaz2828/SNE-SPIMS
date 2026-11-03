@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="DailyReportMapper">
+
+    <sql id="reportSelect">
+        SELECT r.*, s.full_name AS student_name, t.full_name AS teacher_name
+        FROM daily_reports r
+        JOIN students s ON s.id = r.student_id
+        JOIN users t ON t.id = r.teacher_id
+    </sql>
+
+    <insert id="insertReport" parameterType="DailyReport" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO daily_reports (student_id, teacher_id, report_date, summary, mood, status)
+        VALUES (#{studentId}, #{teacherId}, #{reportDate}, #{summary}, #{mood}, #{status})
+    </insert>
+
+    <update id="updateReport" parameterType="DailyReport">
+        UPDATE daily_reports SET report_date = #{reportDate}, summary = #{summary}, mood = #{mood}
+        WHERE id = #{id}
+    </update>
+
+    <update id="publish">
+        UPDATE daily_reports SET status = 'PUBLISHED', published_at = NOW() WHERE id = #{reportId}
+    </update>
+
+    <update id="unpublish">
+        UPDATE daily_reports SET status = 'DRAFT', published_at = NULL WHERE id = #{reportId}
+    </update>
+
+    <select id="findReport" resultType="DailyReport">
+        <include refid="reportSelect"/> WHERE r.id = #{id}
+    </select>
+
+    <select id="dateExists" resultType="long">
+        SELECT COUNT(*) FROM daily_reports
+        WHERE student_id = #{studentId} AND report_date = #{date} AND id &lt;&gt; #{excludeId}
+    </select>
+
+    <select id="reportsForStudent" resultType="DailyReport">
+        <include refid="reportSelect"/>
+        WHERE r.student_id = #{studentId}
+        <if test="publishedOnly">AND r.status = 'PUBLISHED'</if>
+        ORDER BY r.report_date DESC
+    </select>
+
+    <insert id="insertRubric" parameterType="ReportRubric">
+        INSERT INTO report_rubrics (report_id, criterion, rating, comment)
+        VALUES (#{reportId}, #{criterion}, #{rating}, #{comment})
+    </insert>
+
+    <delete id="deleteRubricsForReport">
+        DELETE FROM report_rubrics WHERE report_id = #{reportId}
+    </delete>
+
+    <select id="rubricsForReport" resultType="ReportRubric">
+        SELECT * FROM report_rubrics WHERE report_id = #{reportId} ORDER BY id
+    </select>
+
+    <!-- D22 report_acknowledgements: parent acknowledgement of a published report -->
+    <insert id="acknowledge">
+        INSERT IGNORE INTO report_acknowledgements (report_id, parent_id)
+        VALUES (#{reportId}, #{parentId})
+    </insert>
+
+    <select id="acknowledgedAt" resultType="java.time.LocalDateTime">
+        SELECT acknowledged_at FROM report_acknowledgements
+        WHERE report_id = #{reportId} AND parent_id = #{parentId}
+    </select>
+
+    <select id="latestAcknowledgement" resultType="java.time.LocalDateTime">
+        SELECT MAX(acknowledged_at) FROM report_acknowledgements WHERE report_id = #{reportId}
+    </select>
+
+</mapper>

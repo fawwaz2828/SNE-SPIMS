@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="IncidentMapper">
+
+    <sql id="select">
+        SELECT i.*, s.full_name AS student_name, u.full_name AS reporter_name
+        FROM behavior_incidents i
+        JOIN students s ON s.id = i.student_id
+        JOIN users u ON u.id = i.reported_by
+    </sql>
+
+    <!-- Shared optional filters. The caller passes pre-computed datetime bounds (from/to). -->
+    <sql id="filters">
+        <if test="studentId != null">AND i.student_id = #{studentId}</if>
+        <if test="severity != null and severity != ''">AND i.severity = #{severity}</if>
+        <if test="from != null">AND i.incident_date &gt;= #{from}</if>
+        <if test="to != null">AND i.incident_date &lt; #{to}</if>
+    </sql>
+
+    <insert id="insert" parameterType="BehaviorIncident" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO behavior_incidents (student_id, reported_by, incident_date, location, description,
+            severity, action_taken, parent_visible)
+        VALUES (#{studentId}, #{reportedBy}, #{incidentDate}, #{location}, #{description},
+            #{severity}, #{actionTaken}, #{parentVisible})
+    </insert>
+
+    <select id="find" resultType="BehaviorIncident">
+        <include refid="select"/> WHERE i.id = #{id}
+    </select>
+
+    <select id="search" resultType="BehaviorIncident">
+        <include refid="select"/>
+        <where>
+            <include refid="filters"/>
+        </where>
+        ORDER BY i.incident_date DESC
+    </select>
+
+    <select id="forTeacher" resultType="BehaviorIncident">
+        <include refid="select"/>
+        WHERE i.student_id IN (SELECT student_id FROM teacher_student WHERE teacher_id = #{teacherId})
+        <include refid="filters"/>
+        ORDER BY i.incident_date DESC
+    </select>
+
+    <!-- Restricted records are excluded at the query level, never retrieved. -->
+    <select id="visibleToParentForStudent" resultType="BehaviorIncident">
+        <include refid="select"/>
+        WHERE i.student_id = #{studentId}
+          AND (i.parent_visible = TRUE OR i.severity IN ('HIGH','CRITICAL'))
+        ORDER BY i.incident_date DESC
+    </select>
+
+</mapper>

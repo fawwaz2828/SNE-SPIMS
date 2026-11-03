@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="IepMapper">
+
+    <sql id="programSelect">
+        SELECT p.*, s.full_name AS student_name, u.full_name AS created_by_name
+        FROM iep_programs p
+        JOIN students s ON s.id = p.student_id
+        JOIN users u ON u.id = p.created_by
+    </sql>
+
+    <insert id="insertProgram" parameterType="IepProgram" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO iep_programs (student_id, title, academic_year, start_date, end_date,
+                                  present_levels, accommodations, status, created_by)
+        VALUES (#{studentId}, #{title}, #{academicYear}, #{startDate}, #{endDate},
+                #{presentLevels}, #{accommodations}, #{status}, #{createdBy})
+    </insert>
+
+    <update id="updateProgram" parameterType="IepProgram">
+        UPDATE iep_programs SET title = #{title}, academic_year = #{academicYear},
+            start_date = #{startDate}, end_date = #{endDate},
+            present_levels = #{presentLevels}, accommodations = #{accommodations}, status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <select id="findProgram" resultType="IepProgram">
+        <include refid="programSelect"/> WHERE p.id = #{id}
+    </select>
+
+    <select id="programsForStudent" resultType="IepProgram">
+        <include refid="programSelect"/>
+        WHERE p.student_id = #{studentId}
+        ORDER BY p.academic_year DESC, p.created_at DESC
+    </select>
+
+    <select id="activeProgramForStudent" resultType="IepProgram">
+        <include refid="programSelect"/>
+        WHERE p.student_id = #{studentId} AND p.status = 'ACTIVE'
+        ORDER BY p.start_date DESC
+        LIMIT 1
+    </select>
+
+    <select id="yearExists" resultType="long">
+        SELECT COUNT(*) FROM iep_programs
+        WHERE student_id = #{studentId} AND academic_year = #{academicYear} AND id &lt;&gt; #{excludeId}
+    </select>
+
+    <insert id="insertGoal" parameterType="IepGoal" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO iep_goals (iep_id, domain, description, target_date, status, progress_pct)
+        VALUES (#{iepId}, #{domain}, #{description}, #{targetDate}, #{status}, #{progressPct})
+    </insert>
+
+    <update id="updateGoal" parameterType="IepGoal">
+        UPDATE iep_goals SET domain = #{domain}, description = #{description},
+            target_date = #{targetDate}, status = #{status}, progress_pct = #{progressPct}
+        WHERE id = #{id}
+    </update>
+
+    <select id="findGoal" resultType="IepGoal">
+        SELECT * FROM iep_goals WHERE id = #{id}
+    </select>
+
+    <select id="goalsForProgram" resultType="IepGoal">
+        SELECT * FROM iep_goals WHERE iep_id = #{iepId} ORDER BY domain, id
+    </select>
+
+    <delete id="deleteGoal">
+        DELETE FROM iep_goals WHERE id = #{goalId}
+    </delete>
+
+    <!-- D6 iep_goal_progress_history: snapshot written on every goal progress change -->
+    <insert id="insertProgressSnapshot">
+        INSERT INTO iep_goal_progress_history (goal_id, recorded_on, progress_pct, recorded_by)
+        VALUES (#{goalId}, CURDATE(), #{progressPct}, #{recordedBy})
+        ON DUPLICATE KEY UPDATE progress_pct = VALUES(progress_pct), recorded_by = VALUES(recorded_by)
+    </insert>
+
+
+</mapper>

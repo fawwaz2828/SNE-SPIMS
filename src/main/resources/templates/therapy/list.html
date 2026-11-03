@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Therapy</title></head>
+<body>
+<div layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/students}" th:text="${currentUser != null and currentUser.parent} ? 'My Children' : 'Students'">Students</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/students/{id}(id=${student.id})}" th:text="${student.fullName}">Name</a></li>
+            <li class="breadcrumb-item active">Therapy</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0"><i class="bi bi-activity me-1"></i> Therapy Sessions</h3>
+        <a th:if="${canEdit}" th:href="@{/students/{id}/therapy/new(id=${student.id})}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Schedule</a>
+    </div>
+
+    <table class="table table-hover align-middle bg-white">
+        <thead class="table-light"><tr><th>Type</th><th>Teacher / Therapist</th><th>Start</th><th>End</th><th>Location</th><th>Status</th>
+            <th th:if="${canEdit}"></th></tr></thead>
+        <tbody>
+        <tr th:if="${#lists.isEmpty(sessions)}"><td colspan="7" class="text-center text-muted py-4">No sessions.</td></tr>
+        <tr th:each="s : ${sessions}">
+            <td><span class="badge bg-info text-dark" th:text="${s.therapyType}">type</span></td>
+            <td class="small" th:text="${s.therapistName}">therapist</td>
+            <td class="small" th:text="${#temporals.format(s.startTime, 'dd MMM yyyy HH:mm')}">start</td>
+            <td class="small" th:text="${#temporals.format(s.endTime, 'HH:mm')}">end</td>
+            <td th:text="${s.location}">loc</td>
+            <td><span class="badge"
+                  th:classappend="${s.status == 'COMPLETED'} ? 'bg-success' : (${s.status == 'CANCELLED' or s.status == 'NO_SHOW'} ? 'bg-secondary' : 'bg-primary')"
+                  th:text="${s.status}">status</span></td>
+            <td th:if="${canEdit}" class="text-end text-nowrap">
+                <form th:if="${s.status != 'COMPLETED'}" method="post" class="d-inline"
+                      th:action="@{/students/{sid}/therapy/{id}/complete(sid=${student.id},id=${s.id})}">
+                    <button class="btn btn-sm btn-outline-success" title="Mark completed">
+                        <i class="bi bi-check-lg"></i></button>
+                </form>
+                <a th:href="@{/students/{sid}/therapy/{id}/edit(sid=${student.id},id=${s.id})}"
+                   class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                <form method="post" th:action="@{/students/{sid}/therapy/{id}/delete(sid=${student.id},id=${s.id})}"
+                      class="d-inline">
+                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel & notify?')">
+                        <i class="bi bi-trash"></i></button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

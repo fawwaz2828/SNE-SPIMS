@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title layout:title-pattern="$CONTENT_TITLE · $LAYOUT_TITLE" th:text="${schoolName}">Luna Bridge</title>
+    <link rel="icon" type="image/png" th:href="@{/images/lunabridge.png}"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+    <div layout:fragment="pageStyles"></div>
+</head>
+<body>
+
+<div class="app-shell">
+
+    <!-- ============ Icon rail ============ -->
+    <aside class="rail" sec:authorize="isAuthenticated()"
+           th:with="uri=${currentPath} ?: ''">
+
+        <a class="rail-logo has-img" th:href="@{/dashboard}" title="Luna Bridge">
+            <img class="logo-img" th:src="@{/images/lunabridge.png}" alt="Luna Bridge"/>
+        </a>
+
+        <!-- Home / dashboard (all roles) -->
+        <a class="rail-btn" th:href="@{/dashboard}" title="Home"
+           th:classappend="${uri == '/dashboard' or uri == '/'} ? ' active' : ''">
+            <i class="bi bi-house-door"></i>
+        </a>
+
+        <!-- Students (staff only; parents navigate from their dashboard cards) -->
+        <a class="rail-btn" sec:authorize="hasAnyRole('ADMIN','TEACHER')" th:href="@{/students}" title="Students"
+           th:classappend="${#strings.startsWith(uri,'/student')} ? ' active' : ''">
+            <i class="bi bi-people"></i>
+        </a>
+
+        <!-- Calendar -->
+        <a class="rail-btn" th:href="@{/calendar}" title="Calendar"
+           th:classappend="${#strings.startsWith(uri,'/calendar')} ? ' active' : ''">
+            <i class="bi bi-calendar-event"></i>
+        </a>
+
+        <!-- Messages (teacher / parent) -->
+        <a class="rail-btn" sec:authorize="hasAnyRole('TEACHER','PARENT')"
+           th:href="@{/messages}" title="Messages"
+           th:classappend="${#strings.startsWith(uri,'/messages')} ? ' active' : ''">
+            <i class="bi bi-chat-left-text"></i>
+        </a>
+
+        <!-- Incidents (admin / teacher) -->
+        <a class="rail-btn" sec:authorize="hasAnyRole('ADMIN','TEACHER')"
+           th:href="@{/incidents}" title="Behaviour Incidents"
+           th:classappend="${#strings.startsWith(uri,'/incidents')} ? ' active' : ''">
+            <i class="bi bi-exclamation-triangle"></i>
+        </a>
+
+        <!-- Admin tools -->
+        <a class="rail-btn" sec:authorize="hasRole('ADMIN')" th:href="@{/users}" title="Users"
+           th:classappend="${#strings.startsWith(uri,'/users')} ? ' active' : ''">
+            <i class="bi bi-person-gear"></i>
+        </a>
+        <a class="rail-btn" sec:authorize="hasRole('ADMIN')" th:href="@{/announcements}" title="Announcements"
+           th:classappend="${#strings.startsWith(uri,'/announcements')} ? ' active' : ''">
+            <i class="bi bi-megaphone"></i>
+        </a>
+
+        <div class="rail-spacer"></div>
+
+        <!-- Logout pinned to the bottom -->
+        <form th:action="@{/logout}" method="post" class="m-0">
+            <button class="rail-btn logout" type="submit" title="Sign out" style="border:0;background:transparent;">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
+        </form>
+    </aside>
+
+    <!-- ============ Main column ============ -->
+    <div class="app-main">
+
+        <!-- Topbar -->
+        <header class="topbar" sec:authorize="isAuthenticated()">
+            <!-- Staff: student quick-search. Parents: greeting. -->
+            <form sec:authorize="hasAnyRole('ADMIN','TEACHER')" method="get" th:action="@{/students}" class="search">
+                <i class="bi bi-search"></i>
+                <input type="text" name="keyword" placeholder="Search students…"/>
+            </form>
+            <div class="greeting" sec:authorize="hasRole('PARENT')">
+                Hello, <span sec:authentication="principal.user.fullName">Parent</span>
+            </div>
+
+            <div class="topbar-actions">
+                <a th:href="@{/notifications}" class="icon-btn" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span id="notifBadge"
+                          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                        0
+                    </span>
+                </a>
+
+                <div class="dropdown">
+                    <a class="icon-btn dropdown-toggle dropdown-toggle-no-caret" href="#" data-bs-toggle="dropdown"
+                       title="Account" style="text-decoration:none;">
+                        <i class="bi bi-person"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text small fw-semibold"
+                                  sec:authentication="principal.user.fullName">User</span></li>
+                        <li><span class="dropdown-item-text small text-muted"
+                                  sec:authentication="principal.user.role">ROLE</span></li>
+                        <li><hr class="dropdown-divider"/></li>
+                        <li><a class="dropdown-item" th:href="@{/account}">
+                            <i class="bi bi-person-circle me-2"></i>My Account</a></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post">
+                                <button class="dropdown-item text-danger" type="submit">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Sign out</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content-area">
+            <div th:if="${flashSuccess}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <span th:text="${flashSuccess}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${flashError}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span th:text="${flashError}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div layout:fragment="content">
+                <!-- page content -->
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <span th:text="${schoolName}">Luna Bridge</span> &middot;
+            <span th:text="${#dates.format(#dates.createNow(),'yyyy')}">2026</span>
+        </footer>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Notification bell: poll unread count (no refresh needed) -->
+<script th:if="${currentUser != null}" th:inline="javascript">
+    (function () {
+        const badge = document.getElementById('notifBadge');
+        const url = /*[[@{/notifications/unread-count}]]*/ '/notifications/unread-count';
+        function refresh() {
+            fetch(url, { headers: { 'Accept': 'application/json' } })
+                .then(r => r.ok ? r.json() : { count: 0 })
+                .then(d => {
+                    if (!badge) return;
+                    if (d.count > 0) { badge.textContent = d.count > 99 ? '99+' : d.count; badge.classList.remove('d-none'); }
+                    else { badge.classList.add('d-none'); }
+                })
+                .catch(() => {});
+        }
+        refresh();
+        setInterval(refresh, 30000);
+    })();
+</script>
+
+<div layout:fragment="pageScripts"></div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="StudentMapper">
+
+    <sql id="cols">
+        id, student_code, full_name, date_of_birth, gender, disability_type, support_level,
+        enrollment_date, class_group, notes, active, created_at
+    </sql>
+
+    <select id="findById" resultType="Student">
+        SELECT <include refid="cols"/> FROM students WHERE id = #{id}
+    </select>
+
+    <select id="search" resultType="Student">
+        SELECT <include refid="cols"/> FROM students
+        <where>
+            <if test="includeInactive == false">AND active = TRUE</if>
+            <if test="disabilityType != null and disabilityType != ''">AND disability_type = #{disabilityType}</if>
+            <if test="supportLevel != null and supportLevel != ''">AND support_level = #{supportLevel}</if>
+            <if test="classGroup != null and classGroup != ''">AND class_group = #{classGroup}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (full_name LIKE CONCAT('%', #{keyword}, '%')
+                     OR student_code LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY full_name
+    </select>
+
+    <insert id="insert" parameterType="Student" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO students (student_code, full_name, date_of_birth, gender, disability_type,
+            support_level, enrollment_date, class_group, notes, active)
+        VALUES (#{studentCode}, #{fullName}, #{dateOfBirth}, #{gender}, #{disabilityType},
+            #{supportLevel}, #{enrollmentDate}, #{classGroup}, #{notes}, #{active})
+    </insert>
+
+    <update id="update" parameterType="Student">
+        UPDATE students SET student_code = #{studentCode}, full_name = #{fullName},
+            date_of_birth = #{dateOfBirth}, gender = #{gender}, disability_type = #{disabilityType},
+            support_level = #{supportLevel}, enrollment_date = #{enrollmentDate},
+            class_group = #{classGroup}, notes = #{notes}
+        WHERE id = #{id}
+    </update>
+
+    <update id="setActive">
+        UPDATE students SET active = #{active} WHERE id = #{studentId}
+    </update>
+
+    <select id="codeExists" resultType="long">
+        SELECT COUNT(*) FROM students WHERE student_code = #{studentCode} AND id &lt;&gt; #{excludeId}
+    </select>
+
+</mapper>

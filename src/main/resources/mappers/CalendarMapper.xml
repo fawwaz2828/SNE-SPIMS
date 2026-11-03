@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CalendarMapper">
+
+    <select id="therapyInRange" resultType="TherapySession">
+        SELECT t.*, s.full_name AS student_name, u.full_name AS therapist_name
+        FROM therapy_sessions t
+        JOIN students s ON s.id = t.student_id
+        JOIN users u    ON u.id = t.therapist_id
+        WHERE t.start_time &lt; #{to}
+          AND t.start_time &gt;= #{from}
+          AND t.student_id IN
+          <foreach item="sid" collection="studentIds" open="(" separator="," close=")">#{sid}</foreach>
+        ORDER BY t.start_time
+    </select>
+
+    <select id="goalTargetsInRange" resultType="com.school.calendar.GoalTargetRow">
+        SELECT g.id AS goal_id, g.description AS description, g.domain AS domain,
+               g.target_date AS target_date, p.student_id AS student_id, s.full_name AS student_name
+        FROM iep_goals g
+        JOIN iep_programs p ON p.id = g.iep_id
+        JOIN students s     ON s.id = p.student_id
+        WHERE g.target_date IS NOT NULL
+          AND g.target_date BETWEEN #{from} AND #{to}
+          AND p.student_id IN
+          <foreach item="sid" collection="studentIds" open="(" separator="," close=")">#{sid}</foreach>
+        ORDER BY g.target_date
+    </select>
+
+    <select id="schoolCalendarInRange" resultType="com.school.model.SchoolCalendarEvent">
+        SELECT * FROM school_calendar
+        WHERE event_date BETWEEN #{from} AND #{to}
+        ORDER BY event_date
+    </select>
+
+</mapper>

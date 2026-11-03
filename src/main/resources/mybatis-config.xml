@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <settings>
+        <!-- Maps snake_case columns to camelCase properties (full_name -> fullName). -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+    </settings>
+
+    <!--
+      Lets mapper XML use short result types ("User" instead of the FQN).
+      Aliases are listed explicitly rather than via <package> scanning: under
+      Tomcat's classloader MyBatis's VFS package scan fails ("resource path ...
+      normalized to [null]").
+    -->
+    <typeAliases>
+        <typeAlias type="com.school.model.Announcement" alias="Announcement"/>
+        <typeAlias type="com.school.model.Assignment" alias="Assignment"/>
+        <typeAlias type="com.school.model.BehaviorIncident" alias="BehaviorIncident"/>
+        <typeAlias type="com.school.model.DailyReport" alias="DailyReport"/>
+        <typeAlias type="com.school.model.IepGoal" alias="IepGoal"/>
+        <typeAlias type="com.school.model.IepProgram" alias="IepProgram"/>
+        <typeAlias type="com.school.model.Message" alias="Message"/>
+        <typeAlias type="com.school.model.Conversation" alias="Conversation"/>
+        <typeAlias type="com.school.model.ReportRubric" alias="ReportRubric"/>
+        <typeAlias type="com.school.model.Student" alias="Student"/>
+        <typeAlias type="com.school.model.TherapySession" alias="TherapySession"/>
+        <typeAlias type="com.school.model.User" alias="User"/>
+        <typeAlias type="com.school.model.Notification" alias="Notification"/>
+        <typeAlias type="com.school.model.SchoolCalendarEvent" alias="SchoolCalendarEvent"/>
+    </typeAliases>
+
+    <environments default="production">
+        <environment id="production">
+            <transactionManager type="JDBC"/>
+            <!-- Borrow connections from the application's HikariCP pool (see Db). -->
+            <dataSource type="com.school.util.HikariDataSourceFactory"/>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="mappers/UserMapper.xml"/>
+        <mapper resource="mappers/StudentMapper.xml"/>
+        <mapper resource="mappers/AssignmentMapper.xml"/>
+        <mapper resource="mappers/IepMapper.xml"/>
+        <mapper resource="mappers/DailyReportMapper.xml"/>
+        <mapper resource="mappers/IncidentMapper.xml"/>
+        <mapper resource="mappers/TherapyMapper.xml"/>
+        <mapper resource="mappers/MessageMapper.xml"/>
+        <mapper resource="mappers/AnnouncementMapper.xml"/>
+        <mapper resource="mappers/AnalyticsMapper.xml"/>
+        <mapper resource="mappers/NotificationMapper.xml"/>
+        <mapper resource="mappers/CalendarMapper.xml"/>
+    </mappers>
+
+</configuration>

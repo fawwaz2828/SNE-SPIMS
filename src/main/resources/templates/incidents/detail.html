@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Incident</title></head>
+<body>
+<div layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/incidents}">Incidents</a></li>
+            <li class="breadcrumb-item active" th:text="${incident.studentName}">Student</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <span><i class="bi bi-person me-1"></i><strong th:text="${incident.studentName}">Student</strong></span>
+            <span class="badge"
+                  th:classappend="${incident.severity == 'CRITICAL'} ? 'bg-danger' : (${incident.severity == 'HIGH'} ? 'bg-warning text-dark' : 'bg-secondary')"
+                  th:text="${incident.severity}">sev</span>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">When</dt>
+                <dd class="col-sm-9" th:text="${#temporals.format(incident.incidentDate, 'dd MMM yyyy HH:mm')}">when</dd>
+                <dt class="col-sm-3">Location</dt>
+                <dd class="col-sm-9" th:text="${incident.location} ?: '—'">loc</dd>
+                <dt class="col-sm-3">Description</dt>
+                <dd class="col-sm-9" style="white-space:pre-wrap" th:text="${incident.description}">desc</dd>
+                <dt class="col-sm-3">Action taken</dt>
+                <dd class="col-sm-9" style="white-space:pre-wrap" th:text="${incident.actionTaken} ?: '—'">action</dd>
+                <dt class="col-sm-3">Parent visible</dt>
+                <dd class="col-sm-9" th:text="${incident.parentVisible} ? 'Yes' : 'No'">yes</dd>
+                <dt class="col-sm-3">Reported by</dt>
+                <dd class="col-sm-9" th:text="${incident.reporterName}">reporter</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MessageMapper">
+
+    <!-- is_read is mapped explicitly (model property is "read"); other columns auto-map. -->
+    <resultMap id="message" type="Message">
+        <id column="id" property="id"/>
+        <result column="is_read" property="read"/>
+    </resultMap>
+
+    <sql id="select">
+        SELECT m.*, su.full_name AS sender_name, ru.full_name AS recipient_name,
+               s.full_name AS student_name
+        FROM messages m
+        JOIN users su ON su.id = m.sender_id
+        JOIN users ru ON ru.id = m.recipient_id
+        LEFT JOIN students s ON s.id = m.student_id
+    </sql>
+
+    <insert id="insert" parameterType="Message" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO messages (sender_id, recipient_id, student_id, subject, body)
+        VALUES (#{senderId}, #{recipientId}, #{studentId}, #{subject}, #{body})
+    </insert>
+
+    <select id="find" resultMap="message">
+        <include refid="select"/> WHERE m.id = #{id}
+    </select>
+
+    <select id="inbox" resultMap="message">
+        <include refid="select"/> WHERE m.recipient_id = #{userId} ORDER BY m.sent_at DESC
+    </select>
+
+    <select id="sent" resultMap="message">
+        <include refid="select"/> WHERE m.sender_id = #{userId} ORDER BY m.sent_at DESC
+    </select>
+
+    <select id="unreadCount" resultType="long">
+        SELECT COUNT(*) FROM messages WHERE recipient_id = #{userId} AND is_read = FALSE
+    </select>
+
+    <update id="markRead">
+        UPDATE messages SET is_read = TRUE WHERE id = #{messageId} AND recipient_id = #{recipientId}
+    </update>
+
+    <!-- ===== Chat-room style ===================================================== -->
+
+    <!-- One row per (other participant, student) thread: latest message + unread count. -->
+    <select id="conversations" resultType="Conversation">
+        SELECT t.other_id      AS other_id,
+               u.full_name     AS other_name,
+               u.role          AS other_role,
+               t.student_id    AS student_id,
+               s.full_name     AS student_name,
+               lm.body         AS last_body,
+               lm.sent_at      AS last_at,
+               lm.sender_id    AS last_sender_id,
+               t.unread        AS unread
+        FROM (
+            SELECT CASE WHEN m.sender_id = #{userId} THEN m.recipient_id ELSE m.sender_id END AS other_id,
+                   m.student_id AS student_id,
+                   MAX(m.id)    AS last_id,
+                   SUM(CASE WHEN m.recipient_id = #{userId} AND m.is_read = FALSE THEN 1 ELSE 0 END) AS unread
+            FROM messages m
+            WHERE m.sender_id = #{userId} OR m.recipient_id = #{userId}
+            GROUP BY other_id, m.student_id
+        ) t
+        JOIN messages lm ON lm.id = t.last_id
+        JOIN users u     ON u.id = t.other_id
+        LEFT JOIN students s ON s.id = t.student_id
+        ORDER BY lm.sent_at DESC
+    </select>
+
+    <!-- Full thread between two users about one student (oldest first). -->
+    <select id="thread" resultMap="message">
+        <include refid="select"/>
+        WHERE ((m.sender_id = #{userId} AND m.recipient_id = #{otherId})
+            OR (m.sender_id = #{otherId} AND m.recipient_id = #{userId}))
+        <choose>
+            <when test="studentId != null"> AND m.student_id = #{studentId} </when>
+            <otherwise> AND m.student_id IS NULL </otherwise>
+        </choose>
+        ORDER BY m.sent_at ASC, m.id ASC
+    </select>
+
+    <update id="markThreadRead">
+        UPDATE messages SET is_read = TRUE
+        WHERE recipient_id = #{userId} AND sender_id = #{otherId} AND is_read = FALSE
+        <choose>
+            <when test="studentId != null"> AND student_id = #{studentId} </when>
+            <otherwise> AND student_id IS NULL </otherwise>
+        </choose>
+    </update>
+
+    <!-- Merged thread (parent view): all messages between two users, any student. -->
+    <select id="threadByUser" resultMap="message">
+        <include refid="select"/>
+        WHERE (m.sender_id = #{userId} AND m.recipient_id = #{otherId})
+           OR (m.sender_id = #{otherId} AND m.recipient_id = #{userId})
+        ORDER BY m.sent_at ASC, m.id ASC
+    </select>
+
+    <update id="markThreadReadByUser">
+        UPDATE messages SET is_read = TRUE
+        WHERE recipient_id = #{userId} AND sender_id = #{otherId} AND is_read = FALSE
+    </update>
+
+</mapper>

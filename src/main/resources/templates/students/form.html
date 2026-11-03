@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Student Form</title></head>
+<body>
+<div layout:fragment="content">
+
+    <h3 class="mb-3">
+        <i class="bi bi-person-vcard me-1"></i>
+        <span th:text="${student.id == 0} ? 'New Student' : 'Edit Student'">Student</span>
+    </h3>
+
+    <form method="post" th:action="@{/students}" class="row g-3 bg-white p-4 border rounded">
+        <input type="hidden" name="id" th:value="${student.id}"/>
+
+        <div class="col-md-4">
+            <label class="form-label">Student code <span class="text-danger">*</span></label>
+            <input name="studentCode" class="form-control" required th:value="${student.studentCode}"/>
+        </div>
+        <div class="col-md-8">
+            <label class="form-label">Full name <span class="text-danger">*</span></label>
+            <input name="fullName" class="form-control" required th:value="${student.fullName}"/>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Date of birth <span class="text-danger">*</span></label>
+            <input type="date" name="dateOfBirth" class="form-control" required th:value="${student.dateOfBirth}"/>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Gender <span class="text-danger">*</span></label>
+            <select name="gender" class="form-select" required>
+                <option th:each="g : ${genders}" th:value="${g}" th:text="${g}"
+                        th:selected="${g == student.gender}"></option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Enrollment date <span class="text-danger">*</span></label>
+            <input type="date" name="enrollmentDate" class="form-control" required th:value="${student.enrollmentDate}"/>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Class group</label>
+            <input name="classGroup" class="form-control" th:value="${student.classGroup}"/>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Disability type <span class="text-danger">*</span></label>
+            <select name="disabilityType" class="form-select" required>
+                <option th:each="e : ${disabilityTypes}" th:value="${e.key}" th:text="${e.value}"
+                        th:selected="${e.key == student.disabilityType}"></option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Support level <span class="text-danger">*</span></label>
+            <select name="supportLevel" class="form-select" required>
+                <option th:each="s : ${supportLevels}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == student.supportLevel}"></option>
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Notes</label>
+            <textarea name="notes" class="form-control" rows="3" th:text="${student.notes}"></textarea>
+        </div>
+
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <a th:href="${student.id == 0} ? @{/students} : @{/students/{id}(id=${student.id})}"
+               class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

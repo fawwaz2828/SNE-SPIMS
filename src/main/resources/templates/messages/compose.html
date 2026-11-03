@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Compose</title></head>
+<body>
+<div layout:fragment="content">
+
+    <h3 class="mb-3"><i class="bi bi-pencil-square me-1"></i> New chat</h3>
+
+    <!-- Step 1: pick the student the message is about -->
+    <form th:if="${studentId == null}" method="get" th:action="@{/messages/compose}"
+          class="row g-3 bg-white p-4 border rounded">
+        <div class="col-md-8">
+            <label class="form-label">Which student is this about?</label>
+            <select name="studentId" class="form-select" required>
+                <option value="">Select student…</option>
+                <option th:each="s : ${roster}" th:value="${s.id}" th:text="${s.fullName}"></option>
+            </select>
+        </div>
+        <div class="col-12"><button class="btn btn-primary">Continue</button></div>
+    </form>
+
+    <!-- Step 2: pick recipient and write the first message -->
+    <form th:if="${studentId != null}" method="post" th:action="@{/messages/send}"
+          class="row g-3 bg-white p-4 border rounded">
+        <input type="hidden" name="studentId" th:value="${studentId}"/>
+        <div class="col-md-8">
+            <label class="form-label">Recipient <span class="text-danger">*</span></label>
+            <select name="otherId" class="form-select" required>
+                <option value="">Select recipient…</option>
+                <option th:each="r : ${recipients}" th:value="${r.userId}" th:text="${r.userName}"></option>
+            </select>
+            <div class="form-text" th:if="${#lists.isEmpty(recipients)}">
+                No valid contacts for this student.</div>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Message <span class="text-danger">*</span></label>
+            <textarea name="body" class="form-control" rows="4" required placeholder="Write your message…"></textarea>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-send me-1"></i> Start chat</button>
+            <a th:href="@{/messages/compose}" class="btn btn-outline-secondary">Change student</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

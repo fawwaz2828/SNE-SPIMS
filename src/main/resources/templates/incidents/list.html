@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Incidents</title></head>
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0"><i class="bi bi-exclamation-triangle me-1"></i> Behavior Incidents</h3>
+        <a th:if="${canLog}" th:href="@{/incidents/new(studentId=${studentId})}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Log Incident</a>
+    </div>
+
+    <form method="get" th:action="@{/incidents}" class="row g-2 mb-3">
+        <div class="col-md-3">
+            <select name="studentId" class="form-select form-select-sm">
+                <option value="">All students</option>
+                <option th:each="s : ${roster}" th:value="${s.id}" th:text="${s.fullName}"
+                        th:selected="${s.id == studentId}"></option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="severity" class="form-select form-select-sm">
+                <option value="">Any severity</option>
+                <option th:each="sv : ${severities}" th:value="${sv}" th:text="${sv}"
+                        th:selected="${sv == severity}"></option>
+            </select>
+        </div>
+        <div class="col-md-2"><input type="date" name="from" class="form-control form-control-sm" th:value="${from}"/></div>
+        <div class="col-md-2"><input type="date" name="to" class="form-control form-control-sm" th:value="${to}"/></div>
+        <div class="col-md-2"><button class="btn btn-sm btn-outline-primary w-100">Filter</button></div>
+    </form>
+
+    <div th:if="${needsStudent}" class="alert alert-info">Select a child above to view their incidents.</div>
+
+    <table class="table table-hover align-middle bg-white">
+        <thead class="table-light"><tr><th>When</th><th>Student</th><th>Severity</th><th>Description</th><th>Reporter</th></tr></thead>
+        <tbody>
+        <tr th:if="${#lists.isEmpty(incidents)}"><td colspan="5" class="text-center text-muted py-4">No incidents.</td></tr>
+        <tr th:each="i : ${incidents}" style="cursor:pointer"
+            th:onclick="|window.location='@{/incidents/{id}(id=${i.id})}'|">
+            <td class="small text-nowrap" th:text="${#temporals.format(i.incidentDate, 'dd MMM yyyy HH:mm')}">when</td>
+            <td th:text="${i.studentName}">student</td>
+            <td><span class="badge"
+                  th:classappend="${i.severity == 'CRITICAL'} ? 'bg-danger' : (${i.severity == 'HIGH'} ? 'bg-warning text-dark' : 'bg-secondary')"
+                  th:text="${i.severity}">sev</span></td>
+            <td class="text-truncate" style="max-width:320px" th:text="${i.description}">desc</td>
+            <td class="small" th:text="${i.reporterName}">reporter</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

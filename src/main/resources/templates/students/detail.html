@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Student</title></head>
+<body>
+<div layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/students}" th:text="${currentUser != null and currentUser.parent} ? 'My Children' : 'Students'">Students</a></li>
+            <li class="breadcrumb-item active" th:text="${student.fullName}">Name</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-body d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+                <h3 class="mb-1">
+                    <span th:text="${student.fullName}">Name</span>
+                    <span th:if="${!student.active}" class="badge bg-secondary align-middle">Inactive</span>
+                </h3>
+                <p class="text-muted mb-2"><i class="bi bi-upc me-1"></i><span th:text="${student.studentCode}">code</span></p>
+                <div class="row small">
+                    <div class="col-auto">DOB: <strong th:text="${student.dateOfBirth}">-</strong></div>
+                    <div class="col-auto">Gender: <strong th:text="${student.gender}">-</strong></div>
+                    <div class="col-auto">Disability: <strong th:text="${student.disabilityType}">-</strong></div>
+                    <div class="col-auto">Support: <strong th:text="${student.supportLevel}">-</strong></div>
+                    <div class="col-auto">Class: <strong th:text="${student.classGroup}">-</strong></div>
+                    <div class="col-auto">Enrolled: <strong th:text="${student.enrollmentDate}">-</strong></div>
+                </div>
+                <p th:if="${student.notes}" class="small mt-2 mb-0 text-muted" th:text="${student.notes}">notes</p>
+            </div>
+            <div th:if="${canManage}" class="text-end">
+                <a th:href="@{/students/{id}/edit(id=${student.id})}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Edit</a>
+                <form method="post" th:action="@{/students/{id}/active(id=${student.id})}" class="d-inline">
+                    <input type="hidden" name="active" th:value="${!student.active}"/>
+                    <button class="btn btn-sm"
+                            th:classappend="${student.active} ? 'btn-outline-danger' : 'btn-outline-success'"
+                            th:text="${student.active} ? 'Deactivate' : 'Reactivate'">Toggle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4 col-lg-3">
+            <a th:href="@{/students/{id}/iep(id=${student.id})}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm"><div class="card-body text-center">
+                    <i class="bi bi-clipboard2-pulse fs-2 text-primary"></i>
+                    <div class="mt-2 fw-semibold text-dark">IEP Programs</div>
+                </div></div></a>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <a th:href="@{/students/{id}/reports(id=${student.id})}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm"><div class="card-body text-center">
+                    <i class="bi bi-journal-text fs-2 text-primary"></i>
+                    <div class="mt-2 fw-semibold text-dark">Daily Reports</div>
+                </div></div></a>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <a th:href="@{/students/{id}/therapy(id=${student.id})}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm"><div class="card-body text-center">
+                    <i class="bi bi-activity fs-2 text-primary"></i>
+                    <div class="mt-2 fw-semibold text-dark">Therapy</div>
+                </div></div></a>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <a th:href="@{/incidents(studentId=${student.id})}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm"><div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle fs-2 text-primary"></i>
+                    <div class="mt-2 fw-semibold text-dark">Behavior Incidents</div>
+                </div></div></a>
+        </div>
+        <div class="col-md-4 col-lg-3" th:if="${canManage}">
+            <a th:href="@{/students/{id}/assignments(id=${student.id})}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm"><div class="card-body text-center">
+                    <i class="bi bi-diagram-3 fs-2 text-primary"></i>
+                    <div class="mt-2 fw-semibold text-dark">Assignments</div>
+                </div></div></a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

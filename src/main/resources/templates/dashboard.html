@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Dashboard</title>
+    <th:block layout:fragment="pageStyles">
+    <style>
+        /* Admin / teacher dashboard content. Built from the same primitives as the
+           parent dashboard (parent-dashboard.html) so the two pages are siblings:
+           same hero, calendar week-strip, panels and announcements. Everything is
+           scoped under .ad so the generic class names never collide with the
+           Bootstrap styles loaded by the shared layout. The rail + topbar come from
+           layout/main.html, so they are identical to every other page. */
+        /* Two columns share the page's single scroll (no sticky), so the left and
+           right sides move together instead of scrolling independently. */
+        .ad .content { display: grid; grid-template-columns: 1fr 364px; gap: 24px; align-items: start; }
+        @media (max-width: 820px) {
+            .ad .content { grid-template-columns: 1fr; }
+        }
+        .ad .col { display: flex; flex-direction: column; gap: 24px; }
+
+        .ad h2.hero-h { font-size: 26px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.2; margin: 0; max-width: 64%; }
+        .ad h3.sec { font-size: 18px; font-weight: 800; margin: 0; }
+        .ad .muted { color: var(--ink-soft); }
+        .ad .link { color: var(--red); font-weight: 600; font-size: 13.5px; }
+
+        /* Hero */
+        .ad .hero { position: relative; overflow: hidden; border-radius: 20px; padding: 30px;
+            background: linear-gradient(120deg, oklch(0.94 0.045 28), oklch(0.95 0.03 350)); }
+        .ad .hero p { color: var(--red-deep); font-size: 15px; margin: 12px 0 20px; max-width: 60%; line-height: 1.5; }
+        .ad .btn-dark { display: inline-flex; align-items: center; gap: 8px; background: var(--ink); color: #fff;
+            border: 0; border-radius: 14px; padding: 13px 20px; font-family: inherit; font-weight: 700; font-size: 14.5px; cursor: pointer; }
+        .ad .btn-dark:hover { opacity: .92; color: #fff; }
+        .ad .hero-char { position: absolute; right: 28px; bottom: 0; height: 110px; width: auto;
+            object-fit: contain; pointer-events: none; }
+        @media (max-width: 620px) { .ad .hero-char { display: none; } }
+
+        /* Overview stat cards (colored like the parent's progress cards) */
+        .ad .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        @media (max-width: 560px) { .ad .stats { grid-template-columns: 1fr 1fr; } }
+        .ad .stat { border-radius: 18px; padding: 18px; }
+        .ad .pchip { width: 38px; height: 38px; border-radius: 11px; background: var(--surface);
+            display: grid; place-items: center; font-size: 1.1rem; margin-bottom: 18px; }
+        .ad .stat .num { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; color: var(--ink); }
+        .ad .stat .cap { font-size: 13px; font-weight: 600; margin-top: 6px; }
+
+        /* Panels */
+        .ad .panel { border: 1px solid var(--border); border-radius: 20px; padding: 18px; background: var(--surface); }
+
+        /* Distribution list (students by disability) */
+        .ad .dist { display: flex; flex-direction: column; gap: 12px; }
+        .ad .dist .drow { display: flex; align-items: center; gap: 14px; }
+        .ad .dist .dlabel { width: 150px; font-size: 11.5px; font-weight: 600; color: var(--ink-soft);
+            letter-spacing: .05em; flex-shrink: 0; text-transform: uppercase; }
+        .ad .dist .track { flex: 1; height: 7px; background: var(--bg); border-radius: 999px; overflow: hidden; }
+        .ad .dist .track > span { display: block; height: 100%; border-radius: 999px; background: var(--red); }
+        .ad .dist .dval { width: 20px; font-size: 13.5px; font-weight: 700; color: var(--ink); text-align: right; flex-shrink: 0; }
+
+        /* List rows (therapy sessions, incidents, reports-due) */
+        .ad .lrow { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+        .ad .lrow + .lrow { border-top: 1px solid var(--border); }
+        .ad .lrow .when { font-size: 13px; font-weight: 700; color: var(--ink-soft); flex-shrink: 0; }
+        .ad .lrow .txt { flex: 1; font-size: 14px; color: var(--ink); min-width: 0; }
+        .ad .pill { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 10px;
+            border-radius: 999px; flex-shrink: 0; white-space: nowrap; }
+        .ad .pill-green   { color: var(--d-comm);    background: var(--c-green-bg); }
+        .ad .pill-amber   { color: var(--d-social);   background: var(--c-amber-bg); }
+        .ad .pill-red     { color: var(--red);        background: var(--red-tint); }
+        .ad .pill-neutral { color: var(--d-academic); background: var(--c-blue-bg); }
+
+        /* Side: calendar (identical to the parent dashboard's interactive week strip) */
+        .ad .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .ad .cal-head .title { font-weight: 700; }
+        .ad .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .ad .week .d { position: relative; padding: 8px 0 12px; border-radius: 12px; border: 1px solid transparent;
+            background: transparent; font-family: inherit; cursor: pointer; transition: background .12s, border-color .12s; }
+        .ad .week .d:hover { background: var(--red-tint); }
+        .ad .week .d .dn { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+        .ad .week .d .nu { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--ink); }
+        .ad .week .d.today { background: var(--red); }
+        .ad .week .d.today .dn { color: oklch(1 0 0 / .85); }
+        .ad .week .d.today .nu { color: #fff; }
+        .ad .week .d.sel { border-color: var(--red); }
+        .ad .week .d .dot { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%);
+            width: 5px; height: 5px; border-radius: 999px; background: var(--red); }
+        .ad .week .d.today .dot { background: #fff; }
+        .ad .day-acts { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+        .ad .day-acts .acts-date { font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
+        .ad .act { display: flex; align-items: center; gap: 9px; padding: 7px 0; font-size: 13px; }
+        .ad .act + .act { border-top: 1px solid var(--border); }
+        .ad .act .act-dot { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+        .ad .act .act-time { font-weight: 700; color: var(--ink); min-width: 52px; }
+        .ad .act .act-title { color: var(--ink-soft); }
+        .ad .day-acts .none { color: var(--ink-soft); font-size: 13px; font-style: italic; }
+
+        /* Side: upcoming events feed */
+        .ad .feed { display: flex; flex-direction: column; gap: 12px; }
+        .ad .feed .item { display: flex; align-items: flex-start; gap: 9px; }
+        .ad .feed .item .bullet { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; background: var(--red); }
+        .ad .feed .item .t1 { font-size: 13.5px; font-weight: 700; color: var(--ink); margin: 0 0 2px; }
+        .ad .feed .item .t2 { font-size: 12.5px; color: var(--ink-soft); margin: 0; font-weight: 400; }
+
+        .ad .empty { color: var(--ink-soft); font-size: 14px; padding: 8px 2px; }
+    </style>
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+  <div class="ad">
+
+    <div class="content">
+
+        <!-- ===== Main column ===== -->
+        <div class="col">
+
+            <!-- Hero -->
+            <!-- Admin: behaviour-incident summary (calm when zero). -->
+            <section class="hero" th:if="${data.showAdminStats}">
+                <th:block th:if="${data.incidents4Weeks > 0}">
+                    <h2 class="hero-h"><span th:text="${data.incidents4Weeks}">5</span> behaviour
+                        <span th:text="${data.incidents4Weeks == 1} ? 'incident' : 'incidents'">incidents</span>
+                        recorded in the last <span th:text="${incidentDays}">28</span> days.</h2>
+                    <p>Review recent reports and take action where needed.</p>
+                    <a class="btn-dark" th:href="@{/incidents}">View incidents <i class="bi bi-arrow-right"></i></a>
+                    <a class="link" style="display:inline-block;margin-left:14px;" th:href="@{/students}">Browse students</a>
+                </th:block>
+                <th:block th:unless="${data.incidents4Weeks > 0}">
+                    <h2 class="hero-h">No behaviour incidents in the last <span th:text="${incidentDays}">28</span> days.</h2>
+                    <p>Everything looks calm across the school.</p>
+                    <a class="btn-dark" th:href="@{/students}">Browse students <i class="bi bi-arrow-right"></i></a>
+                </th:block>
+                <img class="hero-char" th:src="@{/images/character.png}" alt=""/>
+            </section>
+            <!-- Teacher: reports-to-write summary. -->
+            <section class="hero" th:unless="${data.showAdminStats}">
+                <th:block th:if="${!#lists.isEmpty(reportsDue)}">
+                    <h2 class="hero-h"><span th:text="${#lists.size(reportsDue)}">3</span>
+                        <span th:text="${#lists.size(reportsDue) == 1} ? 'student needs' : 'students need'">students need</span>
+                        a daily report.</h2>
+                    <p>These students have no published report in the last <span th:text="${reportDays}">7</span> days.</p>
+                    <a class="btn-dark" th:href="@{/students}">Go to students <i class="bi bi-arrow-right"></i></a>
+                    <a class="link" style="display:inline-block;margin-left:14px;" th:href="@{/messages}">Messages</a>
+                </th:block>
+                <th:block th:if="${#lists.isEmpty(reportsDue)}">
+                    <h2 class="hero-h">All caught up — every student has a recent report. 🎉</h2>
+                    <p>Keep an eye on this week's sessions and any incidents below.</p>
+                    <a class="btn-dark" th:href="@{/students}">View students <i class="bi bi-arrow-right"></i></a>
+                </th:block>
+                <img class="hero-char" th:src="@{/images/character.png}" alt=""/>
+            </section>
+
+            <!-- Overview stat cards -->
+            <div>
+                <h3 class="sec" style="margin-bottom:14px;">Overview</h3>
+                <div class="stats">
+                    <!-- Students (both roles) -->
+                    <div class="stat" style="background:var(--c-green-bg);">
+                        <div class="pchip" style="color:var(--d-comm);"><i class="bi bi-people"></i></div>
+                        <div class="num" th:text="${totalStudents}">0</div>
+                        <div class="cap" style="color:var(--d-comm);"
+                             th:text="${data.showAdminStats} ? 'Students' : 'My students'">Students</div>
+                    </div>
+
+                    <!-- Admin: school-wide totals -->
+                    <div class="stat" th:if="${data.showAdminStats}" style="background:var(--c-blue-bg);">
+                        <div class="pchip" style="color:var(--d-academic);"><i class="bi bi-clipboard2-pulse"></i></div>
+                        <div class="num" th:text="${data.activeIepCount}">0</div>
+                        <div class="cap" style="color:var(--d-academic);">Active IEPs</div>
+                    </div>
+                    <div class="stat" th:if="${data.showAdminStats}" style="background:var(--red-tint);">
+                        <div class="pchip" style="color:var(--red);"><i class="bi bi-exclamation-triangle"></i></div>
+                        <div class="num" th:text="${data.incidents4Weeks}">0</div>
+                        <div class="cap" style="color:var(--red);">Incidents · last <span th:text="${incidentDays}">28</span> days</div>
+                    </div>
+                    <div class="stat" th:if="${data.showAdminStats}" style="background:var(--c-amber-bg);">
+                        <div class="pchip" style="color:var(--d-social);"><i class="bi bi-person-badge"></i></div>
+                        <div class="num" th:text="${teacherCount}">0</div>
+                        <div class="cap" style="color:var(--d-social);">Teachers</div>
+                    </div>
+                    <div class="stat" th:if="${data.showAdminStats}" style="background:var(--c-violet-bg);">
+                        <div class="pchip" style="color:var(--d-selfcare);"><i class="bi bi-people-fill"></i></div>
+                        <div class="num" th:text="${parentCount}">0</div>
+                        <div class="cap" style="color:var(--d-selfcare);">Parents</div>
+                    </div>
+                    <div class="stat" th:if="${data.showAdminStats}" style="background:var(--c-cyan-bg);">
+                        <div class="pchip" style="color:var(--d-motor);"><i class="bi bi-calendar2-week"></i></div>
+                        <div class="num" th:text="${sessionsThisWeek}">0</div>
+                        <div class="cap" style="color:var(--d-motor);">Therapy sessions this week</div>
+                    </div>
+
+                    <!-- Teacher: unread messages -->
+                    <div class="stat" th:unless="${data.showAdminStats}" style="background:var(--c-amber-bg);">
+                        <div class="pchip" style="color:var(--d-social);"><i class="bi bi-envelope"></i></div>
+                        <div class="num" th:text="${unreadMessages}">0</div>
+                        <div class="cap" style="color:var(--d-social);">Unread messages</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher: Reports to write -->
+            <div th:unless="${data.showAdminStats}" class="panel">
+                <h3 class="sec" style="margin-bottom:4px;">Reports to write</h3>
+                <div class="muted" style="font-size:13px;margin-bottom:8px;">Students with no published report in the last <span th:text="${reportDays}">7</span> days.</div>
+                <div th:if="${#lists.isEmpty(reportsDue)}" class="empty">All caught up — every student has a recent report. 🎉</div>
+                <div th:unless="${#lists.isEmpty(reportsDue)}">
+                    <div class="lrow" th:each="s : ${reportsDue}">
+                        <span class="txt" th:text="${s.name}">Student</span>
+                        <a class="link" th:href="@{'/students/' + ${s.id} + '/reports/new'}">Write report <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin: Students by disability -->
+            <div th:if="${data.showAdminStats and !#lists.isEmpty(disabilityRows)}" class="panel">
+                <h3 class="sec" style="margin-bottom:16px;">Students by disability</h3>
+                <div class="dist">
+                    <div class="drow" th:each="r : ${disabilityRows}">
+                        <span class="dlabel" th:text="${r.label}">Type</span>
+                        <span class="track"><span th:style="'width:' + ${r.pct} + '%;'"></span></span>
+                        <span class="dval" th:text="${r.total}">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- This week's therapy sessions (both roles) -->
+            <div class="panel">
+                <h3 class="sec" style="margin-bottom:8px;">This week's therapy sessions</h3>
+                <div th:if="${#lists.isEmpty(weekSessions)}" class="empty">No sessions scheduled this week.</div>
+                <div th:unless="${#lists.isEmpty(weekSessions)}">
+                    <div class="lrow" th:each="s : ${weekSessions}">
+                        <span class="when" style="min-width:82px;" th:text="${s.when}">Mon · 09:00</span>
+                        <span class="txt">
+                            <strong th:text="${s.type}">Speech</strong> · <span th:text="${s.student}">Student</span><th:block
+                            th:if="${s.location}"> · <span th:text="${s.location}">Room 1</span></th:block>
+                        </span>
+                        <span class="pill"
+                              th:classappend="${s.status == 'COMPLETED' ? 'pill-green' : (s.status == 'CANCELLED' ? 'pill-red' : 'pill-neutral')}"
+                              th:text="${s.status}">COMPLETED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent behaviour incidents (both roles) -->
+            <div class="panel">
+                <h3 class="sec" style="margin-bottom:8px;">Recent behaviour incidents</h3>
+                <div th:if="${#lists.isEmpty(recentIncidents)}" class="empty">No incidents in the last <span th:text="${incidentDays}">28</span> days. 🎉</div>
+                <div th:unless="${#lists.isEmpty(recentIncidents)}">
+                    <div class="lrow" th:each="i : ${recentIncidents}">
+                        <span class="when" style="min-width:52px;" th:text="${i.when}">3 Jun</span>
+                        <span class="txt"><strong th:text="${i.student}">Student</strong> · <span th:text="${i.desc}">desc</span></span>
+                        <span class="pill"
+                              th:classappend="${i.severity == 'HIGH' ? 'pill-red' : (i.severity == 'MEDIUM' ? 'pill-amber' : 'pill-green')}"
+                              th:text="${i.severity}">LOW</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Side column ===== -->
+        <div class="col">
+
+            <!-- Calendar: this week's activities (click a day to see what's on) -->
+            <div class="panel">
+                <div class="cal-head">
+                    <span class="title" th:text="${monthYear}">June 2026</span>
+                    <a class="link" th:href="@{/calendar}">Full calendar <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="week" id="weekStrip">
+                    <button type="button" class="d" th:each="d,it : ${weekDays}"
+                            th:classappend="${d.today} ? 'today' : ''"
+                            th:attr="data-day=${it.index}, data-has=${!#lists.isEmpty(d.activities)}">
+                        <div class="dn" th:text="${d.name}">Mon</div>
+                        <div class="nu" th:text="${d.num}">8</div>
+                        <span class="dot" th:if="${!#lists.isEmpty(d.activities)}"></span>
+                    </button>
+                </div>
+
+                <!-- One hidden panel per day; JS shows the selected one (today by default). -->
+                <div class="day-acts">
+                    <div class="acts-for" th:each="d,it : ${weekDays}"
+                         th:attr="data-day=${it.index}" th:classappend="${d.today} ? '' : 'd-none'">
+                        <div class="acts-date" th:text="${d.full}">Monday, 8 Jun</div>
+                        <div th:if="${#lists.isEmpty(d.activities)}" class="none">No activities scheduled.</div>
+                        <div th:each="a : ${d.activities}" class="act">
+                            <span class="act-dot" th:style="'background:' + ${a.color} + ';'"></span>
+                            <span class="act-time" th:text="${a.time}">09:00</span>
+                            <span class="act-title" th:text="${a.title}">Speech therapy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming school events + goal due dates (admin only) -->
+            <div th:if="${data.showAdminStats}" class="panel">
+                <h3 class="sec" style="margin-bottom:14px;"><i class="bi bi-calendar-event me-1"></i> Upcoming · next <span th:text="${upcomingDays}">14</span> days</h3>
+                <div th:if="${#lists.isEmpty(upcomingEvents)}" class="empty">Nothing scheduled.</div>
+                <div class="feed" th:unless="${#lists.isEmpty(upcomingEvents)}">
+                    <div class="item" th:each="e : ${upcomingEvents}">
+                        <span class="bullet" th:style="'background:' + ${e.color} + ';'"></span>
+                        <div>
+                            <p class="t1" th:text="${e.title}">Event</p>
+                            <p class="t2" th:text="${e.when}">2026-06-25</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Announcements -->
+            <div class="panel">
+                <h3 class="sec" style="margin-bottom:14px;"><i class="bi bi-megaphone me-1"></i> Announcements</h3>
+                <div th:if="${#lists.isEmpty(announcements)}" class="empty">No announcements right now.</div>
+                <div th:each="a,it : ${announcements}"
+                     th:style="${!it.last} ? 'padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);'">
+                    <div style="font-weight:700;font-size:14.5px;" th:text="${a.title}">Title</div>
+                    <div class="muted" style="font-size:13.5px;line-height:1.45;margin-top:4px;" th:text="${a.body}">Body</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  </div>
+</div>
+
+<th:block layout:fragment="pageScripts">
+    <script>
+        (function () {
+            const strip = document.getElementById('weekStrip');
+            if (!strip) return;
+            const days = strip.querySelectorAll('.d');
+            const panels = document.querySelectorAll('.day-acts .acts-for');
+            days.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const day = btn.getAttribute('data-day');
+                    days.forEach(function (b) { b.classList.remove('sel'); });
+                    btn.classList.add('sel');
+                    panels.forEach(function (p) {
+                        p.classList.toggle('d-none', p.getAttribute('data-day') !== day);
+                    });
+                });
+            });
+        })();
+    </script>
+</th:block>
+</body>
+</html>

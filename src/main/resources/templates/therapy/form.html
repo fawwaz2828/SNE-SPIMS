@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Therapy Form</title></head>
+<body>
+<div layout:fragment="content">
+
+    <h3 class="mb-3">
+        <i class="bi bi-activity me-1"></i>
+        <span th:text="${session.id == 0} ? 'Schedule Session' : 'Edit Session'">Session</span>
+        <small class="text-muted" th:text="${student.fullName}">Name</small>
+    </h3>
+
+    <form method="post" th:action="@{/students/{sid}/therapy(sid=${student.id})}"
+          class="row g-3 bg-white p-4 border rounded">
+        <input type="hidden" name="id" th:value="${session.id}"/>
+
+        <div class="col-md-4">
+            <label class="form-label">Therapy type <span class="text-danger">*</span></label>
+            <select name="therapyType" class="form-select" required>
+                <option th:each="t : ${therapyTypes}" th:value="${t}" th:text="${t}"
+                        th:selected="${t == session.therapyType}"></option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Teacher / Therapist <span class="text-danger">*</span></label>
+            <select name="therapistId" class="form-select" required>
+                <option value="" disabled th:selected="${session.therapistId == 0}">Choose…</option>
+                <option th:each="u : ${therapists}" th:value="${u.id}" th:text="${u.fullName}"
+                        th:selected="${u.id == session.therapistId}"></option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                        th:selected="${s == session.status}"></option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Start <span class="text-danger">*</span></label>
+            <input type="datetime-local" name="startTime" class="form-control" required
+                   th:value="${session.startTime != null} ? ${#temporals.format(session.startTime, 'yyyy-MM-dd''T''HH:mm')} : ''"/>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">End <span class="text-danger">*</span></label>
+            <input type="datetime-local" name="endTime" class="form-control" required
+                   th:value="${session.endTime != null} ? ${#temporals.format(session.endTime, 'yyyy-MM-dd''T''HH:mm')} : ''"/>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Location</label>
+            <input name="location" class="form-control" th:value="${session.location}"/>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Notes</label>
+            <textarea name="notes" class="form-control" rows="2" th:text="${session.notes}"></textarea>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <a th:href="@{/students/{id}/therapy(id=${student.id})}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

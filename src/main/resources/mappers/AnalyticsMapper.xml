@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AnalyticsMapper">
+
+    <!-- Average goal progress per domain, per recorded date, for the given students. -->
+    <select id="domainTrend" resultType="com.school.analytics.DomainTrendRow">
+        SELECT g.domain AS domain,
+               h.recorded_on AS recorded_on,
+               AVG(h.progress_pct) AS avg_progress
+        FROM iep_goal_progress_history h
+        JOIN iep_goals g     ON g.id = h.goal_id
+        JOIN iep_programs p  ON p.id = g.iep_id
+        WHERE h.recorded_on &gt;= #{fromDate}
+          AND p.student_id IN
+          <foreach item="sid" collection="studentIds" open="(" separator="," close=")">#{sid}</foreach>
+        GROUP BY g.domain, h.recorded_on
+        ORDER BY h.recorded_on
+    </select>
+
+    <!-- School-wide (admin) -->
+    <select id="disabilityDistribution" resultType="com.school.analytics.CountRow">
+        SELECT disability_type AS label, COUNT(*) AS total
+        FROM students
+        WHERE active = TRUE
+        GROUP BY disability_type
+        ORDER BY total DESC
+    </select>
+
+    <select id="activeIepCount" resultType="long">
+        SELECT COUNT(*) FROM iep_programs WHERE status = 'ACTIVE'
+    </select>
+
+    <select id="incidentsSince" resultType="long">
+        SELECT COUNT(*) FROM behavior_incidents WHERE incident_date &gt;= #{fromDate}
+    </select>
+
+</mapper>

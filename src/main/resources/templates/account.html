@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>My Account</title></head>
+<body>
+<div layout:fragment="content">
+
+    <h3 class="mb-3"><i class="bi bi-person-circle me-1"></i> My Account</h3>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Profile</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Username</dt><dd class="col-sm-8" th:text="${user.username}">user</dd>
+                        <dt class="col-sm-4">Full name</dt><dd class="col-sm-8" th:text="${user.fullName}">name</dd>
+                        <dt class="col-sm-4">Email</dt><dd class="col-sm-8" th:text="${user.email}">email</dd>
+                        <dt class="col-sm-4">Phone</dt><dd class="col-sm-8" th:text="${user.phone} ?: '—'">phone</dd>
+                        <dt class="col-sm-4">Role</dt>
+                        <dd class="col-sm-8"><span class="badge bg-info text-dark" th:text="${user.role}">ROLE</span></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">Change Password</div>
+                <div class="card-body">
+                    <form method="post" th:action="@{/account/password}" class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Current password</label>
+                            <input type="password" name="current" class="form-control" required/>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">New password</label>
+                            <input type="password" name="next" class="form-control" minlength="6" required/>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Confirm new password</label>
+                            <input type="password" name="confirm" class="form-control" minlength="6" required/>
+                        </div>
+                        <div class="col-12"><button class="btn btn-primary" type="submit">Update password</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

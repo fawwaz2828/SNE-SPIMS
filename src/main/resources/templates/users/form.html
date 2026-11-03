@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Account Form</title></head>
+<body>
+<div layout:fragment="content">
+
+    <h3 class="mb-3">
+        <i class="bi bi-person-plus me-1"></i>
+        <span th:text="${user.id == 0} ? 'New Account' : 'Edit Account'">Account</span>
+    </h3>
+
+    <form method="post" th:action="@{/users}" class="row g-3 bg-white p-4 border rounded">
+        <input type="hidden" name="id" th:value="${user.id}"/>
+
+        <div class="col-md-6">
+            <label class="form-label">Username <span class="text-danger">*</span></label>
+            <input name="username" class="form-control" required th:value="${user.username}"
+                   th:readonly="${user.id != 0}"/>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Role <span class="text-danger">*</span></label>
+            <select name="role" class="form-select" required>
+                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"
+                        th:selected="${r == user.role}"></option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Full name <span class="text-danger">*</span></label>
+            <input name="fullName" class="form-control" required th:value="${user.fullName}"/>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control" required th:value="${user.email}"/>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input name="phone" class="form-control" th:value="${user.phone}"/>
+        </div>
+        <div class="col-md-6" th:if="${user.id == 0}">
+            <label class="form-label">Initial password <span class="text-danger">*</span></label>
+            <input type="password" name="password" class="form-control" minlength="6" required/>
+            <div class="form-text">At least 6 characters. Use the reset button later to change it.</div>
+        </div>
+
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <a th:href="@{/users}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

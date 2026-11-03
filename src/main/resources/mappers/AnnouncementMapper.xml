@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AnnouncementMapper">
+
+    <sql id="select">
+        SELECT a.*, u.full_name AS created_by_name
+        FROM announcements a
+        JOIN users u ON u.id = a.created_by
+    </sql>
+
+    <insert id="insert" parameterType="Announcement" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO announcements (title, body, target_role, created_by, publish_at, expires_at, active)
+        VALUES (#{title}, #{body}, #{targetRole}, #{createdBy}, #{publishAt}, #{expiresAt}, #{active})
+    </insert>
+
+    <update id="update" parameterType="Announcement">
+        UPDATE announcements SET title = #{title}, body = #{body}, target_role = #{targetRole},
+            publish_at = #{publishAt}, expires_at = #{expiresAt}, active = #{active}
+        WHERE id = #{id}
+    </update>
+
+    <update id="setActive">
+        UPDATE announcements SET active = #{active} WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM announcements WHERE id = #{id}
+    </delete>
+
+    <select id="find" resultType="Announcement">
+        <include refid="select"/> WHERE a.id = #{id}
+    </select>
+
+    <select id="all" resultType="Announcement">
+        <include refid="select"/> ORDER BY a.publish_at DESC
+    </select>
+
+    <select id="activeForRole" resultType="Announcement">
+        <include refid="select"/>
+        WHERE a.active = TRUE
+          AND (a.publish_at IS NULL OR a.publish_at &lt;= NOW())
+          AND (a.expires_at IS NULL OR a.expires_at &gt; NOW())
+          AND (a.target_role = 'ALL' OR a.target_role = #{role})
+        ORDER BY COALESCE(a.publish_at, a.created_at) DESC
+        <if test="limit > 0">LIMIT #{limit}</if>
+    </select>
+
+</mapper>

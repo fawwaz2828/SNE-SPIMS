@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="TherapyMapper">
+
+    <sql id="select">
+        SELECT t.*, s.full_name AS student_name, u.full_name AS therapist_name
+        FROM therapy_sessions t
+        JOIN students s ON s.id = t.student_id
+        JOIN users u ON u.id = t.therapist_id
+    </sql>
+
+    <insert id="insert" parameterType="TherapySession" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO therapy_sessions (student_id, therapist_id, therapy_type, start_time, end_time,
+            location, status, notes)
+        VALUES (#{studentId}, #{therapistId}, #{therapyType}, #{startTime}, #{endTime},
+            #{location}, #{status}, #{notes})
+    </insert>
+
+    <update id="update" parameterType="TherapySession">
+        UPDATE therapy_sessions SET therapist_id = #{therapistId}, therapy_type = #{therapyType},
+            start_time = #{startTime}, end_time = #{endTime}, location = #{location},
+            status = #{status}, notes = #{notes}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM therapy_sessions WHERE id = #{id}
+    </delete>
+
+    <select id="find" resultType="TherapySession">
+        <include refid="select"/> WHERE t.id = #{id}
+    </select>
+
+    <select id="forStudent" resultType="TherapySession">
+        <include refid="select"/> WHERE t.student_id = #{studentId} ORDER BY t.start_time
+    </select>
+
+    <select id="forTherapist" resultType="TherapySession">
+        <include refid="select"/> WHERE t.therapist_id = #{therapistId} ORDER BY t.start_time
+    </select>
+
+    <!-- Overlap when existing.start < new.end AND existing.end > new.start. -->
+    <!-- (1) Same STUDENT double-booked. -->
+    <select id="hasConflict" resultType="long">
+        SELECT COUNT(*) FROM therapy_sessions
+        WHERE student_id = #{studentId} AND id &lt;&gt; #{excludeId}
+          AND status &lt;&gt; 'CANCELLED'
+          AND start_time &lt; #{end} AND end_time &gt; #{start}
+    </select>
+
+    <!-- (2) Same TEACHER/THERAPIST double-booked (across any student). -->
+    <select id="hasTherapistConflict" resultType="long">
+        SELECT COUNT(*) FROM therapy_sessions
+        WHERE therapist_id = #{therapistId} AND id &lt;&gt; #{excludeId}
+          AND status &lt;&gt; 'CANCELLED'
+          AND start_time &lt; #{end} AND end_time &gt; #{start}
+    </select>
+
+    <!-- (3) Same ROOM (location) double-booked. -->
+    <select id="hasRoomConflict" resultType="long">
+        SELECT COUNT(*) FROM therapy_sessions
+        WHERE location = #{location} AND id &lt;&gt; #{excludeId}
+          AND status &lt;&gt; 'CANCELLED'
+          AND start_time &lt; #{end} AND end_time &gt; #{start}
+    </select>
+
+    <!-- Weekly timetable: every session for a set of students within a window. -->
+    <select id="forStudentsInRange" resultType="TherapySession">
+        <include refid="select"/>
+        WHERE t.student_id IN
+        <foreach item="sid" collection="ids" open="(" separator="," close=")">#{sid}</foreach>
+          AND t.start_time &gt;= #{from} AND t.start_time &lt; #{to}
+        ORDER BY t.start_time
+    </select>
+
+</mapper>

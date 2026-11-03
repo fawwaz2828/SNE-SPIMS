@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="NotificationMapper">
+
+    <resultMap id="notifMap" type="Notification">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="type" column="type"/>
+        <result property="title" column="title"/>
+        <result property="message" column="message"/>
+        <result property="link" column="link"/>
+        <result property="studentId" column="student_id"/>
+        <result property="read" column="is_read"/>
+        <result property="archived" column="is_archived"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="Notification" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO notifications (user_id, type, title, message, link, student_id)
+        VALUES (#{userId}, #{type}, #{title}, #{message}, #{link}, #{studentId})
+    </insert>
+
+    <select id="unreadCount" resultType="long">
+        SELECT COUNT(*) FROM notifications
+        WHERE user_id = #{userId} AND is_read = FALSE AND is_archived = FALSE
+    </select>
+
+    <select id="listForUser" resultMap="notifMap">
+        SELECT * FROM notifications
+        WHERE user_id = #{userId}
+        <if test="includeArchived == false"> AND is_archived = FALSE</if>
+        ORDER BY created_at DESC
+        LIMIT 200
+    </select>
+
+    <update id="markRead">
+        UPDATE notifications SET is_read = TRUE WHERE id = #{id} AND user_id = #{userId}
+    </update>
+
+    <update id="markAllRead">
+        UPDATE notifications SET is_read = TRUE WHERE user_id = #{userId} AND is_read = FALSE
+    </update>
+
+    <update id="archive">
+        UPDATE notifications SET is_archived = TRUE, is_read = TRUE
+        WHERE id = #{id} AND user_id = #{userId}
+    </update>
+
+    <!-- Sessions starting within the next 2 days (for the 07:00 reminder job). -->
+    <select id="upcomingTherapy" resultType="TherapySession">
+        SELECT t.*, s.full_name AS student_name, u.full_name AS therapist_name
+        FROM therapy_sessions t
+        JOIN students s ON s.id = t.student_id
+        JOIN users u    ON u.id = t.therapist_id
+        WHERE t.status = 'SCHEDULED'
+          AND t.start_time &gt;= NOW()
+          AND t.start_time &lt; DATE_ADD(NOW(), INTERVAL 2 DAY)
+        ORDER BY t.start_time
+    </select>
+
+</mapper>

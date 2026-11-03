@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head><title>Announcements</title></head>
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0"><i class="bi bi-megaphone me-1"></i> Announcements</h3>
+        <a th:href="@{/announcements/new}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> New</a>
+    </div>
+
+    <table class="table align-middle bg-white">
+        <thead class="table-light"><tr><th>Title</th><th>Audience</th><th>Window</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        <tr th:if="${#lists.isEmpty(announcements)}"><td colspan="5" class="text-center text-muted py-4">None.</td></tr>
+        <tr th:each="a : ${announcements}">
+            <td><strong th:text="${a.title}">Title</strong>
+                <div class="small text-muted text-truncate" style="max-width:360px" th:text="${a.body}">body</div></td>
+            <td><span class="badge bg-info text-dark" th:text="${a.targetRole}">ALL</span></td>
+            <td class="small text-muted">
+                <span th:if="${a.publishAt}" th:text="${#temporals.format(a.publishAt,'dd MMM yyyy')}">from</span>
+                <span th:if="${a.expiresAt}"> – <span th:text="${#temporals.format(a.expiresAt,'dd MMM yyyy')}">to</span></span>
+            </td>
+            <td>
+                <span th:if="${a.active}" class="badge bg-success">Active</span>
+                <span th:unless="${a.active}" class="badge bg-secondary">Hidden</span>
+            </td>
+            <td class="text-end text-nowrap">
+                <a th:href="@{/announcements/{id}/edit(id=${a.id})}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil"></i></a>
+                <form method="post" th:action="@{/announcements/{id}/toggle(id=${a.id})}" class="d-inline">
+                    <input type="hidden" name="active" th:value="${!a.active}"/>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="bi" th:classappend="${a.active} ? 'bi-eye-slash' : 'bi-eye'"></i></button>
+                </form>
+                <form method="post" th:action="@{/announcements/{id}/delete(id=${a.id})}" class="d-inline">
+                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete?')">
+                        <i class="bi bi-trash"></i></button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

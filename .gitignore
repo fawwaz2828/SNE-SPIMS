@@ -1,0 +1,29 @@
+# ---- Build output (Maven) ----
+target/
+
+# ---- Logs & run artifacts ----
+*.log
+*.err
+
+# ---- Compiled classes ----
+*.class
+
+# ---- IDE / editor ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+/nbproject/private/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# NOTE: .tools/ (vendored Maven 3.9.9) is intentionally NOT ignored so the
+# project stays buildable without a system Maven install. Add ".tools/" here
+# if you prefer to exclude the ~11 MB binary.
